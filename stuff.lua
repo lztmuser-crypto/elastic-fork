@@ -4,6 +4,7 @@ local CoreGui = game:GetService("CoreGui")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local TextService = game:GetService("TextService")
+local HttpService = game:GetService("HttpService")
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -58,7 +59,14 @@ end
 
 local Library = {
     ToggleKey = nil,
-    Flags = {}
+    Flags = {},
+    _WindowCreated = false,
+    _ConfigFolder = "SerpentUI",
+    _ConfigGameFolder = tostring(game.GameId),
+    _ActiveConfig = "default.json",
+    _AutoloadFile = "autoload.json",
+    _PendingConfig = nil,
+    _AutoloadAttempted = false
 }
 
 function Library:SetWindowKeybind(KeyEnum)
@@ -80,7 +88,275 @@ function Library:SetTheme(NewTheme)
     end
 end
 
+local function EnsureFolderPath(Path)
+    if type(Path) ~= "string" or Path == "" then return false end
+    if type(makefolder) ~= "function" or type(isfolder) ~= "function" then return false end
+
+    local CurrentPath = ""
+    for Segment in string.gmatch(Path:gsub("\\", "/"), "[^/]+") do
+        CurrentPath = (CurrentPath == "") and Segment or (CurrentPath .. "/" .. Segment)
+        local ok, exists = pcall(isfolder, CurrentPath)
+        if not ok or not exists then
+            pcall(makefolder, CurrentPath)
+        end
+    end
+    return true
+end
+
+local function CloneValue(Value)
+    if type(Value) ~= "table" then return Value end
+    local Copy = {}
+    for Key, Item in Value do
+        Copy[Key] = CloneValue(Item)
+    end
+    return Copy
+end
+
+function Library:NormalizeConfigName(Name)
+    local Raw = tostring(Name or ""):gsub("^%s+", ""):gsub("%s+$", "")
+    if Raw == "" then return nil end
+    if Raw:lower():sub(-5) ~= ".json" then
+        Raw = Raw .. ".json"
+    end
+    return Raw
+end
+
+function Library:GetConfigDirectory()
+    return string.format("%s/%s", self._ConfigFolder, tostring(self._ConfigGameFolder))
+end
+
+function Library:GetConfigPath(FileName)
+    local Name = FileName or self._ActiveConfig
+    if type(Name) ~= "string" or Name == "" then return nil end
+    if string.find(Name, "/", 1, true) or string.find(Name, "\\", 1, true) then
+        return Name
+    end
+    return string.format("%s/%s", self:GetConfigDirectory(), Name)
+end
+
+function Library:EnsureConfigDirectory()
+    EnsureFolderPath(self._ConfigFolder)
+    return EnsureFolderPath(self:GetConfigDirectory())
+end
+
+function Library:_ReadJsonFile(FileName)
+    if type(readfile) ~= "function" or type(isfile) ~= "function" then return nil end
+    local Path = self:GetConfigPath(FileName)
+    if not Path then return nil end
+
+    local okExists, exists = pcall(isfile, Path)
+    if not okExists or not exists then return nil end
+
+    local okRead, Raw = pcall(readfile, Path)
+    if not okRead or type(Raw) ~= "string" or Raw == "" then return nil end
+
+    local okDecode, Data = pcall(function()
+        return HttpService:JSONDecode(Raw)
+    end)
+    if not okDecode or type(Data) ~= "table" then return nil end
+    return Data
+end
+
+function Library:_WriteJsonFile(Data, FileName)
+    if type(writefile) ~= "function" then return false end
+    local Path = self:GetConfigPath(FileName)
+    if not Path then return false end
+
+    self:EnsureConfigDirectory()
+
+    local okEncode, Raw = pcall(function()
+        return HttpService:JSONEncode(Data)
+    end)
+    if not okEncode or type(Raw) ~= "string" then return false end
+
+    local okWrite = pcall(writefile, Path, Raw)
+    return okWrite == true
+end
+
+function Library:SetActiveConfig(Name)
+    local Normalized = self:NormalizeConfigName(Name)
+    if not Normalized then return false end
+    self._ActiveConfig = Normalized
+    return true
+end
+
+function Library:GetActiveConfig()
+    return self._ActiveConfig
+end
+
+function Library:GetConfigList()
+    local Out, Seen = {}, {}
+    local function Add(Name)
+        local Normalized = self:NormalizeConfigName(Name)
+        if Normalized and not Seen[Normalized] then
+            Seen[Normalized] = true
+            table.insert(Out, Normalized)
+        end
+    end
+
+    Add(self._ActiveConfig)
+
+    if type(listfiles) == "function" then
+        self:EnsureConfigDirectory()
+        local ok, Files = pcall(listfiles, self:GetConfigDirectory())
+        if ok and type(Files) == "table" then
+            for _, Path in Files do
+                if type(Path) == "string" then
+                    local FileName = Path:gsub("\\", "/"):match("([^/]+)$")
+                    if FileName and FileName:lower():sub(-5) == ".json" and FileName:lower() ~= tostring(self._AutoloadFile):lower() then
+                        Add(FileName)
+                    end
+                end
+            end
+        end
+    end
+
+    table.sort(Out)
+    return Out
+end
+
+function Library:GetAutoloadConfigName()
+    local Data = self:_ReadJsonFile(self._AutoloadFile)
+    if type(Data) ~= "table" then return nil end
+    if Data.Enabled == false then return nil end
+    return self:NormalizeConfigName(Data.Config)
+end
+
+function Library:SetAutoloadConfig(Name)
+    local Normalized = self:NormalizeConfigName(Name)
+    if not Normalized then return false end
+    return self:_WriteJsonFile({
+        Enabled = true,
+        Config = Normalized,
+        Updated = os.time()
+    }, self._AutoloadFile)
+end
+
+function Library:DisableAutoloadConfig()
+    return self:_WriteJsonFile({
+        Enabled = false,
+        Config = nil,
+        Updated = os.time()
+    }, self._AutoloadFile)
+end
+
+function Library:_ApplyValueToFlag(FlagName, Obj, DataTable)
+    if type(DataTable) ~= "table" or type(Obj) ~= "table" then return end
+    local RawValue = DataTable[FlagName]
+    if RawValue == nil then return end
+
+    local ComponentType = type(Obj.GetComponentType) == "function" and Obj:GetComponentType() or nil
+    pcall(function()
+        if ComponentType == "Colorpicker" then
+            if type(RawValue) == "table" then
+                local ColorData = RawValue.Color
+                if type(ColorData) == "table" and #ColorData >= 3 and type(Obj.SetValue) == "function" then
+                    Obj:SetValue(Color3.new(tonumber(ColorData[1]) or 1, tonumber(ColorData[2]) or 1, tonumber(ColorData[3]) or 1))
+                end
+                if RawValue.Transparency ~= nil and type(Obj.SetTransparency) == "function" then
+                    Obj:SetTransparency(tonumber(RawValue.Transparency) or 100)
+                end
+            end
+            return
+        end
+
+        if ComponentType == "Keybind" then
+            if type(RawValue) == "table" and type(RawValue.EnumType) == "string" and type(RawValue.Name) == "string" then
+                local EnumTable = Enum[RawValue.EnumType]
+                if EnumTable and EnumTable[RawValue.Name] and type(Obj.SetValue) == "function" then
+                    Obj:SetValue(EnumTable[RawValue.Name])
+                end
+            end
+            return
+        end
+
+        if type(Obj.SetValue) == "function" then
+            Obj:SetValue(RawValue)
+        end
+    end)
+end
+
+function Library:RegisterFlag(FlagName, Obj)
+    self.Flags[FlagName] = Obj
+    if self._PendingConfig then
+        self:_ApplyValueToFlag(FlagName, Obj, self._PendingConfig)
+    end
+    return Obj
+end
+
+function Library:CollectConfigData()
+    local Data = {
+        _meta = {
+            version = "serpent-config-v1",
+            updated = os.time()
+        }
+    }
+
+    for FlagName, Obj in self.Flags do
+        if type(Obj) == "table" and type(Obj.GetValue) == "function" then
+            local ComponentType = type(Obj.GetComponentType) == "function" and Obj:GetComponentType() or nil
+            local ok, Value = pcall(function()
+                return Obj:GetValue()
+            end)
+            if ok and Value ~= nil then
+                if ComponentType == "Colorpicker" and typeof(Value) == "Color3" then
+                    Data[FlagName] = {
+                        Color = {Value.R, Value.G, Value.B},
+                        Transparency = type(Obj.GetTransparency) == "function" and (tonumber(Obj:GetTransparency()) or 100) or 100
+                    }
+                elseif ComponentType == "Keybind" and typeof(Value) == "EnumItem" then
+                    Data[FlagName] = {
+                        EnumType = Value.EnumType.Name,
+                        Name = Value.Name
+                    }
+                else
+                    Data[FlagName] = CloneValue(Value)
+                end
+            end
+        end
+    end
+
+    return Data
+end
+
+function Library:SaveConfig(ConfigName)
+    local Normalized = self:NormalizeConfigName(ConfigName or self._ActiveConfig)
+    if not Normalized then return false, "Invalid config name" end
+
+    self._ActiveConfig = Normalized
+    local Payload = self:CollectConfigData()
+    local ok = self:_WriteJsonFile(Payload, Normalized)
+    if not ok then return false, "writefile unavailable or write failed" end
+    return true
+end
+
+function Library:LoadConfig(ConfigName)
+    local Normalized = self:NormalizeConfigName(ConfigName or self._ActiveConfig)
+    if not Normalized then return false, "Invalid config name" end
+
+    self._ActiveConfig = Normalized
+    local Data = self:_ReadJsonFile(Normalized)
+    if type(Data) ~= "table" then return false, "Config not found" end
+
+    self._PendingConfig = Data
+    for FlagName, Obj in self.Flags do
+        self:_ApplyValueToFlag(FlagName, Obj, Data)
+    end
+    return true
+end
+
+function Library:LoadAutoloadConfig()
+    local ConfigName = self:GetAutoloadConfigName()
+    if not ConfigName then return false, "No autoload config set" end
+    return self:LoadConfig(ConfigName)
+end
+
 function Library:Window(Options)
+    self._WindowCreated = true
+    if not self._AutoloadAttempted then
+        self._AutoloadAttempted = true
+        self:LoadAutoloadConfig()
+    end
     Options = type(Options) == "table" and Options or {}
     local SubTitle = Options.SubTitle or "v1.0.0"
     local DefaultWindowSize = UDim2.new(0, 850, 0, 550)
@@ -286,7 +562,6 @@ function Library:Window(Options)
     end
 
     function WindowObj:SetSize(NewSize)
-        if typeof(NewSize) ~= "UDim2" then return false end
         MainFrame.Size = SanitizeWindowSize(NewSize, MainFrame.Size)
         task.defer(RelayoutBottomBar)
         return true
@@ -706,7 +981,7 @@ function Library:Window(Options)
             function CPObj:GetTransparency() return CurrentAlpha * 100 end
             function CPObj:SetValue(color) CurrentColor = color; HSV = {Color3.toHSV(CurrentColor)}; UpdateVisuals(true) end
             function CPObj:SetTransparency(trans) CurrentAlpha = math.clamp(trans, 0, 100) / 100; UpdateVisuals(true) end
-            Library.Flags[FlagName] = CPObj
+            Library:RegisterFlag(FlagName, CPObj)
             return CPObj
         end
 
@@ -763,7 +1038,7 @@ function Library:Window(Options)
             local ButtonObj = {Row = Row}
             function ButtonObj:GetComponentType() return "Button" end
             function ButtonObj:Fire() Callback() end
-            Library.Flags[FlagName] = ButtonObj
+            Library:RegisterFlag(FlagName, ButtonObj)
             return ButtonObj
         end
 
@@ -824,7 +1099,7 @@ function Library:Window(Options)
             function TextboxObj:GetComponentType() return "Textbox" end
             function TextboxObj:GetValue() return CurrentValue end
             function TextboxObj:SetValue(val) SetValue(val, true) end
-            Library.Flags[FlagName] = TextboxObj
+            Library:RegisterFlag(FlagName, TextboxObj)
             return TextboxObj
         end
 
@@ -894,7 +1169,7 @@ function Library:Window(Options)
             function KeybindObj:GetComponentType() return "Keybind" end
             function KeybindObj:GetValue() return CurrentKey end
             function KeybindObj:SetValue(val) SetValue(val, true) end
-            Library.Flags[FlagName] = KeybindObj
+            Library:RegisterFlag(FlagName, KeybindObj)
             return KeybindObj
         end
 
@@ -1068,7 +1343,7 @@ function Library:Window(Options)
             function SliderObj:GetComponentType() return "Slider" end
             function SliderObj:GetValue() return CurrentValue end
             function SliderObj:SetValue(val) SetValue(val, true) end
-            Library.Flags[FlagName] = SliderObj
+            Library:RegisterFlag(FlagName, SliderObj)
             return SliderObj
         end
 
@@ -1113,7 +1388,7 @@ function Library:Window(Options)
                 return self
             end
             
-            Library.Flags[FlagName] = ToggleObj
+            Library:RegisterFlag(FlagName, ToggleObj)
             return ToggleObj
         end
 
@@ -1263,7 +1538,7 @@ function Library:Window(Options)
             function DropdownObj:SetValue(val) SetValue(val, true) end
             function DropdownObj:SetOptions(newOptions) SetOptionsList(newOptions) end
             function DropdownObj:GetOptions() return OptionsList end
-            Library.Flags[FlagName] = DropdownObj
+            Library:RegisterFlag(FlagName, DropdownObj)
             return DropdownObj
         end
 
@@ -1271,6 +1546,152 @@ function Library:Window(Options)
     end
 
     WindowObj.ConfigTab = WindowObj:Tab({Title = "Configuration", Icon = Icons.Save, IsConfig = true})
+
+    do
+        local ConfigTab = WindowObj.ConfigTab
+        local ActiveConfig = Library:GetActiveConfig() or "default.json"
+
+        local ConfigNameBox
+        local ConfigDropdown
+        local SuppressAutoloadCallback = false
+        local AutoloadToggle
+
+        local function UpdateAutoloadState(SelectedConfig)
+            if not AutoloadToggle then return end
+            SuppressAutoloadCallback = true
+            local autoloadConfig = Library:GetAutoloadConfigName()
+            AutoloadToggle:SetValue(autoloadConfig ~= nil and autoloadConfig == SelectedConfig)
+            SuppressAutoloadCallback = false
+        end
+
+        local function SetSelectedConfig(Name, SyncDropdown)
+            local Normalized = Library:NormalizeConfigName(Name)
+            if not Normalized then return nil end
+            Library:SetActiveConfig(Normalized)
+            if ConfigNameBox then
+                ConfigNameBox:SetValue((Normalized:gsub("%.json$", "")))
+            end
+            if SyncDropdown and ConfigDropdown then
+                ConfigDropdown:SetValue(Normalized)
+            end
+            UpdateAutoloadState(Normalized)
+            return Normalized
+        end
+
+        local function RefreshConfigList(PreferredConfig)
+            if not ConfigDropdown then return end
+            local Options = Library:GetConfigList()
+            ConfigDropdown:SetOptions(Options)
+
+            local Preferred = Library:NormalizeConfigName(PreferredConfig)
+                or Library:GetActiveConfig()
+                or Options[1]
+
+            if Preferred then
+                ConfigDropdown:SetValue(Preferred)
+            end
+        end
+
+        ConfigNameBox = ConfigTab:Textbox({
+            Title = "Config Name",
+            Default = (ActiveConfig:gsub("%.json$", "")),
+            Placeholder = "default"
+        })
+
+        ConfigDropdown = ConfigTab:Dropdown({
+            Title = "Config File",
+            Options = Library:GetConfigList(),
+            Default = ActiveConfig,
+            Callback = function(Choice)
+                SetSelectedConfig(Choice, false)
+            end
+        })
+
+        AutoloadToggle = ConfigTab:Toggle({
+            Title = "Autoload Active Config",
+            Default = Library:GetAutoloadConfigName() == ActiveConfig,
+            Callback = function(State)
+                if SuppressAutoloadCallback then return end
+                local Selected = Library:GetActiveConfig()
+                if not Selected then return end
+
+                if State then
+                    local ok = Library:SetAutoloadConfig(Selected)
+                    if not ok then
+                        SuppressAutoloadCallback = true
+                        AutoloadToggle:SetValue(false)
+                        SuppressAutoloadCallback = false
+                        warn("Serpent config: failed to set autoload.")
+                    end
+                else
+                    local autoloadConfig = Library:GetAutoloadConfigName()
+                    if autoloadConfig == Selected then
+                        if not Library:DisableAutoloadConfig() then
+                            warn("Serpent config: failed to disable autoload.")
+                        end
+                    end
+                end
+            end
+        })
+
+        ConfigTab:Button({
+            Title = "Save Active Config",
+            Action = "Save",
+            Callback = function()
+                local Selected = Library:NormalizeConfigName(ConfigNameBox:GetValue()) or Library:GetActiveConfig()
+                if not Selected then return end
+                local ok, err = Library:SaveConfig(Selected)
+                if ok then
+                    SetSelectedConfig(Selected, true)
+                    RefreshConfigList(Selected)
+                else
+                    warn("Serpent config save failed:", tostring(err))
+                end
+            end
+        })
+
+        ConfigTab:Button({
+            Title = "Load Selected Config",
+            Action = "Load",
+            Callback = function()
+                local Selected = Library:NormalizeConfigName(ConfigDropdown:GetValue())
+                    or Library:NormalizeConfigName(ConfigNameBox:GetValue())
+                    or Library:GetActiveConfig()
+                if not Selected then return end
+                local ok, err = Library:LoadConfig(Selected)
+                if ok then
+                    SetSelectedConfig(Selected, true)
+                else
+                    warn("Serpent config load failed:", tostring(err))
+                end
+            end
+        })
+
+        ConfigTab:Button({
+            Title = "Refresh Config List",
+            Action = "Refresh",
+            Callback = function()
+                RefreshConfigList(Library:GetActiveConfig())
+            end
+        })
+
+        ConfigTab:Button({
+            Title = "Disable Autoload",
+            Action = "Disable",
+            Callback = function()
+                local ok = Library:DisableAutoloadConfig()
+                if ok then
+                    UpdateAutoloadState(Library:GetActiveConfig())
+                else
+                    warn("Serpent config: failed to disable autoload.")
+                end
+            end
+        })
+
+        SetSelectedConfig(ActiveConfig, true)
+        RefreshConfigList(ActiveConfig)
+    end
+
     SaveBtn.MouseButton1Click:Connect(function() WindowObj.ConfigTab:Activate() end)
 
     return WindowObj
@@ -1278,10 +1699,12 @@ end
 
 function Library:RunExample()
     self:SetWindowKeybind(Enum.KeyCode.RightShift)
+    local env = (getgenv and getgenv()) or _G
+    local exampleSize = (type(env) == "table" and env.__SERPENT_EXAMPLE_SIZE) or UDim2.fromOffset(650, 390)
 
     local Window = self:Window({
         SubTitle = "Free User",
-        Size = UDim2.fromOffset(850, 550)
+        Size = exampleSize
     })
 
     local Aimbot = Window:Tab({
@@ -1327,16 +1750,31 @@ function Library:RunExample()
     return Window
 end
 
--- Disable autorun by setting:
--- getgenv().__SKIP_SERPENT_EXAMPLE = true
+-- Example autorun:
+-- - Runs by default when this file is loaded directly.
+-- - Skips automatically if your script creates a window immediately.
+-- Controls:
+-- getgenv().__SKIP_SERPENT_EXAMPLE = true   -- disable autorun
+-- getgenv().__RUN_SERPENT_EXAMPLE = true    -- force autorun
+-- getgenv().__SERPENT_EXAMPLE_SIZE = UDim2.fromOffset(650, 390)
 do
     local env = (getgenv and getgenv()) or _G
-    local skip = type(env) == "table" and (env.__SKIP_SERPENT_EXAMPLE == true or env.__SKIP_UILIB_EXAMPLE == true)
-    if not skip then
+    local runExample = true
+    if type(env) == "table" then
+        if env.__SKIP_SERPENT_EXAMPLE == true or env.__SKIP_UILIB_EXAMPLE == true then
+            runExample = false
+        end
+        if env.__RUN_SERPENT_EXAMPLE == true then
+            runExample = true
+        end
+    end
+    if runExample then
         task.spawn(function()
             if not game:IsLoaded() then
                 game.Loaded:Wait()
             end
+            task.wait(0.15)
+            if Library._WindowCreated then return end
             local ok, err = pcall(function()
                 Library:RunExample()
             end)
