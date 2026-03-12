@@ -418,138 +418,174 @@ function Library:Window(Options)
     Create("UICorner", {CornerRadius = UDim.new(0, 8), Parent = MainFrame})
     Create("UIDragDetector", {Parent = MainFrame})
 
-    local BottomBar = Create("Frame", {Size = UDim2.new(1, 0, 0, 64), Position = UDim2.new(0, 0, 1, -64), BackgroundColor3 = Theme.Sidebar, BorderSizePixel = 0, Parent = MainFrame})
-    
-    local ProfileFrame = Create("Frame", {Size = UDim2.new(0, 200, 1, 0), Position = UDim2.new(0, 20, 0, 0), BackgroundTransparency = 1, Parent = BottomBar})
-    local AvatarImage = Create("ImageLabel", {Size = UDim2.new(0, 40, 0, 40), Position = UDim2.new(0, 0, 0.5, -20), BackgroundColor3 = Theme.Search, Parent = ProfileFrame})
-    Create("UICorner", {CornerRadius = UDim.new(1, 0), Parent = AvatarImage})
-    
-    task.spawn(function()
-        local success, thumb = pcall(function() return Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48) end)
-        if success then AvatarImage.Image = thumb end
-    end)
-    
-    local ProfileName = Create("TextLabel", {Size = UDim2.new(1, -52, 0, 20), Position = UDim2.new(0, 52, 0.5, -18), BackgroundTransparency = 1, Text = LocalPlayer.DisplayName or "User", TextColor3 = Theme.TextPrimary, Font = Theme.Font, TextSize = 15, TextXAlignment = Enum.TextXAlignment.Left, Parent = ProfileFrame})
-    local ProfileSub = Create("TextLabel", {Size = UDim2.new(1, -52, 0, 16), Position = UDim2.new(0, 52, 0.5, 2), BackgroundTransparency = 1, Text = SubTitle, TextColor3 = Theme.TextSecondary, Font = Theme.Font, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left, Parent = ProfileFrame})
+    local SidebarFrame = Create("Frame", {
+        Size = UDim2.new(0, 180, 1, -20),
+        Position = UDim2.new(0, 10, 0, 10),
+        BackgroundColor3 = Theme.Sidebar,
+        BorderSizePixel = 0,
+        Parent = MainFrame
+    })
+    Create("UICorner", {CornerRadius = UDim.new(0, 12), Parent = SidebarFrame})
+    local SidebarStroke = Create("UIStroke", {Color = Theme.Border, Thickness = 1, Parent = SidebarFrame})
 
-    local TabButtonSize = 30
+    local TabButtonHeight = 40
     local TabIconSize = 16
-    local TabButtonGap = 4
+    local TabButtonGap = 6
     local TabContainerNav = Create("ScrollingFrame", {
-        Size = UDim2.new(0, 300, 1, 0),
-        Position = UDim2.new(0.5, -150, 0, 0),
+        Size = UDim2.new(1, -20, 1, -94),
+        Position = UDim2.new(0, 10, 0, 10),
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
         CanvasSize = UDim2.new(0, 0, 0, 0),
-        AutomaticCanvasSize = Enum.AutomaticSize.X,
-        ScrollingDirection = Enum.ScrollingDirection.X,
+        AutomaticCanvasSize = Enum.AutomaticSize.Y,
+        ScrollingDirection = Enum.ScrollingDirection.Y,
         ScrollBarThickness = 3,
         ScrollingEnabled = true,
         Active = true,
-        Parent = BottomBar,
+        Parent = SidebarFrame,
     })
-    local TabNavLayout = Create("UIListLayout", {FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Left, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, TabButtonGap), Parent = TabContainerNav})
-    Create("UIPadding", {PaddingLeft = UDim.new(0, 2), PaddingRight = UDim.new(0, 2), Parent = TabContainerNav})
+    local TabNavLayout = Create("UIListLayout", {
+        FillDirection = Enum.FillDirection.Vertical,
+        HorizontalAlignment = Enum.HorizontalAlignment.Center,
+        VerticalAlignment = Enum.VerticalAlignment.Top,
+        Padding = UDim.new(0, TabButtonGap),
+        Parent = TabContainerNav
+    })
 
-    local ActionContainer = Create("Frame", {Size = UDim2.new(0, 250, 1, 0), Position = UDim2.new(1, -270, 0, 0), BackgroundTransparency = 1, Parent = BottomBar})
-    local ActionLayout = Create("UIListLayout", {FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 12), Parent = ActionContainer})
-    
-    local SaveBtn = Create("TextButton", {Size = UDim2.new(0, 34, 0, 34), BackgroundColor3 = Theme.Search, Text = "", AutoButtonColor = false, LayoutOrder = 2, Parent = ActionContainer})
-    Create("UICorner", {CornerRadius = UDim.new(0, 7), Parent = SaveBtn})
-    local SaveIcon = Create("ImageLabel", {Size = UDim2.new(0, 16, 0, 16), Position = UDim2.new(0.5, 0, 0.5, 0), AnchorPoint = Vector2.new(0.5, 0.5), BackgroundTransparency = 1, Image = Icons.Save, ImageColor3 = Theme.TextSecondary, Parent = SaveBtn})
+    local ProfileFrame = Create("Frame", {
+        Size = UDim2.new(1, -20, 0, 64),
+        Position = UDim2.new(0, 10, 1, -74),
+        BackgroundTransparency = 1,
+        Parent = SidebarFrame
+    })
+    local AvatarShell = Create("Frame", {
+        Size = UDim2.fromOffset(54, 54),
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundColor3 = Theme.Main,
+        BorderSizePixel = 0,
+        Parent = ProfileFrame
+    })
+    Create("UICorner", {CornerRadius = UDim.new(1, 0), Parent = AvatarShell})
+    local AvatarStroke = Create("UIStroke", {Color = Theme.Border, Thickness = 1, Parent = AvatarShell})
+    local AvatarImage = Create("ImageLabel", {
+        Size = UDim2.new(1, -8, 1, -8),
+        Position = UDim2.new(0, 4, 0, 4),
+        BackgroundColor3 = Theme.Search,
+        BorderSizePixel = 0,
+        ScaleType = Enum.ScaleType.Crop,
+        Parent = AvatarShell
+    })
+    Create("UICorner", {CornerRadius = UDim.new(1, 0), Parent = AvatarImage})
 
-    local SearchBar = Create("Frame", {Size = UDim2.new(0, 160, 0, 34), BackgroundColor3 = Theme.Search, LayoutOrder = 1, Parent = ActionContainer})
-    Create("UICorner", {CornerRadius = UDim.new(0, 7), Parent = SearchBar})
-    local SearchIcon = Create("ImageLabel", {Size = UDim2.new(0, 14, 0, 14), Position = UDim2.new(0, 10, 0.5, -7), BackgroundTransparency = 1, Image = Icons.Search, ImageColor3 = Theme.TextSecondary, Parent = SearchBar})
-    local SearchBox = Create("TextBox", {Size = UDim2.new(1, -36, 1, 0), Position = UDim2.new(0, 30, 0, 0), BackgroundTransparency = 1, Text = "", PlaceholderText = "Search...", TextColor3 = Theme.TextPrimary, PlaceholderColor3 = Theme.TextSecondary, Font = Theme.Font, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left, Parent = SearchBar})
+    task.spawn(function()
+        local success, thumb = pcall(function()
+            return Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+        end)
+        if success then
+            AvatarImage.Image = thumb
+        end
+    end)
+
+    local ContentArea = Create("Frame", {
+        Size = UDim2.new(1, -210, 1, -20),
+        Position = UDim2.new(0, 200, 0, 10),
+        BackgroundTransparency = 1,
+        Parent = MainFrame
+    })
+    local ContentHeader = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, 38),
+        BackgroundTransparency = 1,
+        Parent = ContentArea
+    })
+    local SearchBar = Create("Frame", {
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundColor3 = Theme.Search,
+        BorderSizePixel = 0,
+        Parent = ContentHeader
+    })
+    Create("UICorner", {CornerRadius = UDim.new(0, 10), Parent = SearchBar})
+    local SearchStroke = Create("UIStroke", {Color = Theme.Border, Thickness = 1, Parent = SearchBar})
+    local SearchIcon = Create("ImageLabel", {
+        Size = UDim2.new(0, 14, 0, 14),
+        Position = UDim2.new(0, 12, 0.5, -7),
+        BackgroundTransparency = 1,
+        Image = Icons.Search,
+        ImageColor3 = Theme.TextSecondary,
+        Parent = SearchBar
+    })
+    local SearchBox = Create("TextBox", {
+        Size = UDim2.new(1, -40, 1, 0),
+        Position = UDim2.new(0, 32, 0, 0),
+        BackgroundTransparency = 1,
+        Text = "",
+        PlaceholderText = "Search...",
+        TextColor3 = Theme.TextPrimary,
+        PlaceholderColor3 = Theme.TextSecondary,
+        Font = Theme.Font,
+        TextSize = 13,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = SearchBar
+    })
 
     local function Clamp(Value, Min, Max)
         return math.max(Min, math.min(Max, Value))
     end
 
-    local function RelayoutBottomBar()
-        local BarWidth = BottomBar.AbsoluteSize.X
-        if BarWidth <= 0 then return end
+    local function RelayoutSidebar()
+        local FrameWidth = MainFrame.AbsoluteSize.X
+        local FrameHeight = MainFrame.AbsoluteSize.Y
+        if FrameWidth <= 0 or FrameHeight <= 0 then return end
 
-        local EdgePadding = 14
-        local SectionGap = 8
-        local MinProfile = 44
-        local MinNav = 100
-        local MinAction = 52
-        local PrefProfile = 170
-        local PrefAction = 220
+        local OuterPadding = 10
+        local SectionGap = 12
+        local MinContentWidth = 120
+        local SidebarWidth = Clamp(math.floor(FrameWidth * 0.24), 132, 198)
+        local MaxSidebarWidth = math.max(110, FrameWidth - (OuterPadding * 2) - SectionGap - MinContentWidth)
+        SidebarWidth = math.min(SidebarWidth, MaxSidebarWidth)
+        local ContentX = OuterPadding + SidebarWidth + SectionGap
+        local ContentWidth = math.max(MinContentWidth, FrameWidth - ContentX - OuterPadding)
 
-        local UsableWidth = math.max(0, BarWidth - (EdgePadding * 2))
-        local ProfileWidth = Clamp(math.floor(UsableWidth * 0.22), MinProfile, PrefProfile)
-        local ActionWidth = Clamp(math.floor(UsableWidth * 0.26), MinAction, PrefAction)
-        local NavWidth = UsableWidth - ProfileWidth - ActionWidth - (SectionGap * 2)
-        local ActiveTabs = 0
-        for _, t in ipairs(WindowObj.Tabs) do
-            if not t.IsConfig then ActiveTabs += 1 end
-        end
-        local DesiredNavWidth = math.max(MinNav, (ActiveTabs * TabButtonSize) + (math.max(0, ActiveTabs - 1) * TabButtonGap))
+        SidebarFrame.Position = UDim2.new(0, OuterPadding, 0, OuterPadding)
+        SidebarFrame.Size = UDim2.new(0, SidebarWidth, 1, -(OuterPadding * 2))
 
-        if NavWidth < DesiredNavWidth then
-            local Missing = DesiredNavWidth - NavWidth
-            local FromAction = math.min(Missing, ActionWidth - MinAction)
-            ActionWidth = ActionWidth - FromAction
-            Missing = Missing - FromAction
-            local FromProfile = math.min(Missing, ProfileWidth - MinProfile)
-            ProfileWidth = ProfileWidth - FromProfile
-            NavWidth = UsableWidth - ProfileWidth - ActionWidth - (SectionGap * 2)
-        end
-        NavWidth = math.max(MinNav, NavWidth)
+        TabContainerNav.Position = UDim2.new(0, 10, 0, 10)
+        TabContainerNav.Size = UDim2.new(1, -20, 1, -94)
 
-        local X = EdgePadding
-        ProfileFrame.Position = UDim2.new(0, X, 0, 0)
-        ProfileFrame.Size = UDim2.new(0, ProfileWidth, 1, 0)
-        X = X + ProfileWidth + SectionGap
-        TabContainerNav.Position = UDim2.new(0, X, 0, 0)
-        TabContainerNav.Size = UDim2.new(0, NavWidth, 1, 0)
-        X = X + NavWidth + SectionGap
-        ActionContainer.Position = UDim2.new(0, X, 0, 0)
-        ActionContainer.Size = UDim2.new(0, ActionWidth, 1, 0)
+        ProfileFrame.Position = UDim2.new(0, 10, 1, -74)
+        ProfileFrame.Size = UDim2.new(1, -20, 0, 64)
 
-        local DynamicGap = (ActionWidth < 180 or NavWidth < DesiredNavWidth) and 4 or 6
-        ActionLayout.Padding = UDim.new(0, DynamicGap)
-        TabNavLayout.Padding = UDim.new(0, DynamicGap)
-
-        local SearchWidth = ActionWidth - SaveBtn.Size.X.Offset - DynamicGap
-        if SearchWidth < 96 then
-            SearchBar.Visible = false
-        else
-            SearchBar.Visible = true
-            SearchBar.Size = UDim2.new(0, SearchWidth, 0, 34)
-        end
-
-        local ShowProfileText = ProfileWidth >= 120
-        ProfileName.Visible = ShowProfileText
-        ProfileSub.Visible = ShowProfileText
+        ContentArea.Position = UDim2.new(0, ContentX, 0, OuterPadding)
+        ContentArea.Size = UDim2.new(0, ContentWidth, 1, -(OuterPadding * 2))
     end
 
     local function EnsureTabVisible(TabButton)
         if not TabButton or not TabButton.Parent then return end
-        local navWidth = TabContainerNav.AbsoluteSize.X
-        if navWidth <= 0 then return end
+        local navHeight = TabContainerNav.AbsoluteSize.Y
+        if navHeight <= 0 then return end
         local navPos = TabContainerNav.AbsolutePosition
         local btnPos = TabButton.AbsolutePosition
-        local left = btnPos.X - navPos.X
-        local right = left + TabButton.AbsoluteSize.X
-        local canvasX = TabContainerNav.CanvasPosition.X
-        local targetX = canvasX
-        if left < 0 then
-            targetX = canvasX + left - 6
-        elseif right > navWidth then
-            targetX = canvasX + (right - navWidth) + 6
+        local top = btnPos.Y - navPos.Y
+        local bottom = top + TabButton.AbsoluteSize.Y
+        local canvasY = TabContainerNav.CanvasPosition.Y
+        local targetY = canvasY
+        if top < 0 then
+            targetY = canvasY + top - 6
+        elseif bottom > navHeight then
+            targetY = canvasY + (bottom - navHeight) + 6
         end
-        local maxX = math.max(0, TabContainerNav.AbsoluteCanvasSize.X - navWidth)
-        if targetX ~= canvasX then
-            TabContainerNav.CanvasPosition = Vector2.new(math.clamp(targetX, 0, maxX), 0)
+        local maxY = math.max(0, TabContainerNav.AbsoluteCanvasSize.Y - navHeight)
+        if targetY ~= canvasY then
+            TabContainerNav.CanvasPosition = Vector2.new(0, math.clamp(targetY, 0, maxY))
         end
     end
 
-    local ContentArea = Create("Frame", {Size = UDim2.new(1, 0, 1, -64), Position = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1, Parent = MainFrame})
-    local TabContainer = Create("Frame", {Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Parent = ContentArea})
+    local TabContainer = Create("Frame", {
+        Size = UDim2.new(1, 0, 1, -48),
+        Position = UDim2.new(0, 0, 0, 48),
+        BackgroundTransparency = 1,
+        Parent = ContentArea
+    })
     
     local SearchContent = Create("ScrollingFrame", {Size = UDim2.new(1, -30, 1, -40), Position = UDim2.new(0, 20, 0, 20), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, ScrollBarImageColor3 = Theme.Accent, CanvasSize = UDim2.new(0, 0, 0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y, Visible = false, Parent = TabContainer})
     Create("UIListLayout", {SortOrder = Enum.SortOrder.LayoutOrder, Parent = SearchContent})
@@ -568,24 +604,19 @@ function Library:Window(Options)
 
     ThemeUpdate(function()
         MainFrame.BackgroundColor3 = Theme.Body
-        BottomBar.BackgroundColor3 = Theme.Sidebar
-        ProfileName.TextColor3 = Theme.TextPrimary
-        ProfileSub.TextColor3 = Theme.TextSecondary
+        SidebarFrame.BackgroundColor3 = Theme.Sidebar
+        SidebarStroke.Color = Theme.Border
+        AvatarShell.BackgroundColor3 = Theme.Main
+        AvatarStroke.Color = Theme.Border
+        AvatarImage.BackgroundColor3 = Theme.Search
         SearchBar.BackgroundColor3 = Theme.Search
+        SearchStroke.Color = Theme.Border
         SearchIcon.ImageColor3 = Theme.TextSecondary
         SearchBox.TextColor3 = Theme.TextPrimary
         SearchBox.PlaceholderColor3 = Theme.TextSecondary
         SearchContent.ScrollBarImageColor3 = Theme.Accent
         TabContainerNav.ScrollBarImageColor3 = Theme.Accent
         NoResultsLabel.TextColor3 = Theme.TextSecondary
-        
-        if WindowObj.CurrentTab and WindowObj.CurrentTab.IsConfig then
-            SaveBtn.BackgroundColor3 = Theme.Accent
-            SaveIcon.ImageColor3 = Color3.fromRGB(17, 17, 17)
-        else
-            SaveBtn.BackgroundColor3 = Theme.Search
-            SaveIcon.ImageColor3 = Theme.TextSecondary
-        end
     end)
 
     function WindowObj:ToggleVisibility()
@@ -608,7 +639,7 @@ function Library:Window(Options)
 
     function WindowObj:SetSize(NewSize)
         MainFrame.Size = SanitizeWindowSize(NewSize, MainFrame.Size)
-        task.defer(RelayoutBottomBar)
+        task.defer(RelayoutSidebar)
         return true
     end
 
@@ -619,10 +650,10 @@ function Library:Window(Options)
 
     MainFrame:GetPropertyChangedSignal("AbsolutePosition"):Connect(function() for _, wm in WindowObj.Watermarks do wm:UpdatePosition() end end)
     MainFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
-        RelayoutBottomBar()
+        RelayoutSidebar()
         for _, wm in WindowObj.Watermarks do wm:UpdatePosition() end
     end)
-    task.defer(RelayoutBottomBar)
+    task.defer(RelayoutSidebar)
 
     function WindowObj:Watermark(InitialText)
         local wmFrame = Create("Frame", {
@@ -742,13 +773,37 @@ function Library:Window(Options)
     function WindowObj:Tab(Options)
         local TabTitle = Options.Title or "Tab"
         local TabIcon = Options.Icon or Icons.Placeholder
-        local IsConfig = Options.IsConfig or false
-
-        local TabBtn = Create("TextButton", {Size = UDim2.new(0, TabButtonSize, 0, TabButtonSize), BackgroundTransparency = 1, BackgroundColor3 = Theme.Search, Text = "", AutoButtonColor = false})
-        if not IsConfig then TabBtn.Parent = TabContainerNav end
-        
-        Create("UICorner", {CornerRadius = UDim.new(0, 7), Parent = TabBtn})
-        local TabIconImage = Create("ImageLabel", {Size = UDim2.new(0, TabIconSize, 0, TabIconSize), Position = UDim2.new(0.5, 0, 0.5, 0), AnchorPoint = Vector2.new(0.5, 0.5), BackgroundTransparency = 1, Image = TabIcon, ImageColor3 = Theme.TabIconInactive, Parent = TabBtn})
+        local TabBtn = Create("TextButton", {
+            Size = UDim2.new(1, 0, 0, TabButtonHeight),
+            BackgroundTransparency = 0.18,
+            BackgroundColor3 = Theme.Main,
+            BorderSizePixel = 0,
+            Text = "",
+            AutoButtonColor = false,
+            Parent = TabContainerNav
+        })
+        Create("UICorner", {CornerRadius = UDim.new(0, 10), Parent = TabBtn})
+        local TabIconImage = Create("ImageLabel", {
+            Size = UDim2.new(0, TabIconSize, 0, TabIconSize),
+            Position = UDim2.new(0, 14, 0.5, 0),
+            AnchorPoint = Vector2.new(0, 0.5),
+            BackgroundTransparency = 1,
+            Image = TabIcon,
+            ImageColor3 = Theme.TabIconInactive,
+            Parent = TabBtn
+        })
+        local TabTitleLabel = Create("TextLabel", {
+            Size = UDim2.new(1, -48, 1, 0),
+            Position = UDim2.new(0, 40, 0, 0),
+            BackgroundTransparency = 1,
+            Text = TabTitle,
+            TextColor3 = Theme.TextSecondary,
+            Font = Theme.Font,
+            TextSize = 13,
+            TextTruncate = Enum.TextTruncate.AtEnd,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = TabBtn
+        })
 
         local TabCanvas = Create("CanvasGroup", {Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, GroupTransparency = 1, Visible = false, Parent = TabContainer})
         local TabContent = Create("ScrollingFrame", {Size = UDim2.new(1, -30, 1, -40), Position = UDim2.new(0, 20, 0, 20), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, ScrollBarImageColor3 = Theme.Accent, CanvasSize = UDim2.new(0, 0, 0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y, Parent = TabCanvas})
@@ -757,15 +812,28 @@ function Library:Window(Options)
         ThemeUpdate(function()
             if WindowObj.CurrentTab and WindowObj.CurrentTab.TabButton == TabBtn then
                 TabBtn.BackgroundColor3 = Theme.Search
+                TabBtn.BackgroundTransparency = 0
                 TabIconImage.ImageColor3 = Theme.TabIconActive
+                TabTitleLabel.TextColor3 = Theme.TextPrimary
             else
-                TabBtn.BackgroundColor3 = Theme.Sidebar
+                TabBtn.BackgroundColor3 = Theme.Main
+                TabBtn.BackgroundTransparency = 0.18
                 TabIconImage.ImageColor3 = Theme.TabIconInactive
+                TabTitleLabel.TextColor3 = Theme.TextSecondary
             end
             TabContent.ScrollBarImageColor3 = Theme.Accent
         end)
 
-        local TabObj = {Canvas = TabCanvas, Container = TabContent, TabButton = TabBtn, Title = TabTitle, Icon = TabIcon, IsConfig = IsConfig, LayoutOrder = 0}
+        local TabObj = {
+            Canvas = TabCanvas,
+            Container = TabContent,
+            TabButton = TabBtn,
+            TabIconImage = TabIconImage,
+            TabTitleLabel = TabTitleLabel,
+            Title = TabTitle,
+            Icon = TabIcon,
+            LayoutOrder = 0
+        }
         table.insert(WindowObj.Tabs, TabObj)
 
         local function ActivateTab()
@@ -782,44 +850,33 @@ function Library:Window(Options)
                     Tab.Canvas.Visible = false; Tab.Canvas.GroupTransparency = 1
                 end
 
-                if Tab.IsConfig then
-                    TweenService:Create(SaveBtn, TweenFast, {BackgroundColor3 = Theme.Search}):Play()
-                    TweenService:Create(SaveIcon, TweenFast, {ImageColor3 = Theme.TextSecondary}):Play()
-                else
-                    TweenService:Create(Tab.TabButton, TweenFast, {BackgroundTransparency = 1}):Play()
-                    TweenService:Create(Tab.TabButton:FindFirstChildOfClass("ImageLabel"), TweenFast, {ImageColor3 = Theme.TabIconInactive}):Play()
-                end
+                TweenService:Create(Tab.TabButton, TweenFast, {BackgroundTransparency = 0.18, BackgroundColor3 = Theme.Main}):Play()
+                TweenService:Create(Tab.TabIconImage, TweenFast, {ImageColor3 = Theme.TabIconInactive}):Play()
+                TweenService:Create(Tab.TabTitleLabel, TweenFast, {TextColor3 = Theme.TextSecondary}):Play()
             end
             
             TabObj.Canvas.Visible = true
             TabObj.Canvas.GroupTransparency = WindowObj.CurrentTab and 1 or 0
             TweenService:Create(TabObj.Canvas, TweenSmooth, {GroupTransparency = 0}):Play()
 
-            if TabObj.IsConfig then
-                TweenService:Create(SaveBtn, TweenFast, {BackgroundColor3 = Theme.Accent}):Play()
-                TweenService:Create(SaveIcon, TweenFast, {ImageColor3 = Color3.fromRGB(17, 17, 17)}):Play()
-            else
-                TweenService:Create(TabObj.TabButton, TweenFast, {BackgroundTransparency = 0}):Play()
-                TweenService:Create(TabObj.TabButton:FindFirstChildOfClass("ImageLabel"), TweenFast, {ImageColor3 = Theme.TabIconActive}):Play()
-            end
+            TweenService:Create(TabObj.TabButton, TweenFast, {BackgroundTransparency = 0, BackgroundColor3 = Theme.Search}):Play()
+            TweenService:Create(TabObj.TabIconImage, TweenFast, {ImageColor3 = Theme.TabIconActive}):Play()
+            TweenService:Create(TabObj.TabTitleLabel, TweenFast, {TextColor3 = Theme.TextPrimary}):Play()
 
             WindowObj.CurrentTab = TabObj
-            if not TabObj.IsConfig then
-                task.defer(function()
-                    EnsureTabVisible(TabObj.TabButton)
-                end)
+            if SearchBox.Text ~= "" then
+                TabObj.Canvas.Visible = false
             end
+            task.defer(function()
+                EnsureTabVisible(TabObj.TabButton)
+            end)
         end
 
         function TabObj:Activate() ActivateTab() end
 
-        if not IsConfig then
-            TabBtn.MouseButton1Click:Connect(ActivateTab)
-            local ActiveTabsCount = 0
-            for _, t in WindowObj.Tabs do if not t.IsConfig then ActiveTabsCount += 1 end end
-            if ActiveTabsCount == 1 then ActivateTab() end
-            task.defer(RelayoutBottomBar)
-        end
+        TabBtn.MouseButton1Click:Connect(ActivateTab)
+        if #WindowObj.Tabs == 1 then ActivateTab() end
+        task.defer(RelayoutSidebar)
 
         local function CreateRow(ComponentTitle, Height, IncludeInSearch)
             TabObj.LayoutOrder = TabObj.LayoutOrder + 1
@@ -1668,7 +1725,7 @@ function Library:Window(Options)
         return TabObj
     end
 
-    WindowObj.ConfigTab = WindowObj:Tab({Title = "Configuration", Icon = Icons.Save, IsConfig = true})
+    WindowObj.ConfigTab = WindowObj:Tab({Title = "Configuration", Icon = Icons.Save})
 
     do
         local ConfigTab = WindowObj.ConfigTab
@@ -1814,8 +1871,6 @@ function Library:Window(Options)
         SetSelectedConfig(ActiveConfig, true)
         RefreshConfigList(ActiveConfig)
     end
-
-    SaveBtn.MouseButton1Click:Connect(function() WindowObj.ConfigTab:Activate() end)
 
     return WindowObj
 end
