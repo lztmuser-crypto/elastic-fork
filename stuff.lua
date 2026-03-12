@@ -774,8 +774,19 @@ function Library:Window(Options)
             TabObj.LayoutOrder = TabObj.LayoutOrder + 1
             local Row = Create("Frame", {Size = UDim2.new(1, 0, 0, Height or 40), BackgroundTransparency = 1, LayoutOrder = TabObj.LayoutOrder, Parent = TabContent})
             if not NoSeparator then
-                local RowSep = Create("Frame", {Size = UDim2.new(1, -16, 0, 1), Position = UDim2.new(0, 8, 1, -1), BackgroundColor3 = Theme.Border, BackgroundTransparency = 0.5, BorderSizePixel = 0, Parent = Row})
-                ThemeUpdate(function() RowSep.BackgroundColor3 = Theme.Border end)
+                local RowSep = Create("Frame", {
+                    Size = UDim2.new(1, -14, 0, 2),
+                    Position = UDim2.new(0, 7, 1, -2),
+                    BackgroundColor3 = Theme.TextSecondary,
+                    BackgroundTransparency = 0,
+                    BorderSizePixel = 0,
+                    ZIndex = 25,
+                    Parent = Row
+                })
+                Create("UICorner", {CornerRadius = UDim.new(1, 0), Parent = RowSep})
+                ThemeUpdate(function()
+                    RowSep.BackgroundColor3 = Theme.TextSecondary
+                end)
             end
             if IncludeInSearch ~= false then
                 table.insert(WindowObj.AllRows, {Row = Row, OriginalParent = TabContent, Title = ComponentTitle or ""})
@@ -952,7 +963,7 @@ function Library:Window(Options)
             local ColorMap = Create("TextButton", {Parent = PickerFrame, Position = UDim2.new(0, 0, 0, 0), Size = UDim2.new(1, 0, 0, 120), BackgroundColor3 = Color3.fromHSV(HSV[1], 1, 1), AutoButtonColor = false, Text = "", ZIndex = 3001})
             local SatOverlay = Create("Frame", {Parent = ColorMap, Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(1, 1, 1), ZIndex = 3002, BorderSizePixel = 0})
             Create("UIGradient", {Parent = SatOverlay, Transparency = NumberSequence.new{NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 1)}})
-            local VlOverlay = Create("Frame", {Parent = ColorMap, Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(0, 0, 0), ZIndex = 3003, BorderSizePixel = 0})
+            local ValOverlay = Create("Frame", {Parent = ColorMap, Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(0, 0, 0), ZIndex = 3003, BorderSizePixel = 0})
             Create("UIGradient", {Parent = ValOverlay, Rotation = 90, Transparency = NumberSequence.new{NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(1, 0)}})
             
             local MapMarker = Create("Frame", {Parent = ColorMap, Size = UDim2.new(0, 12, 0, 12), BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(HSV[2], 0, 1 - HSV[3], 0), ZIndex = 3004})
