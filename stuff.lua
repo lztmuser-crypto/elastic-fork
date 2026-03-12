@@ -453,15 +453,15 @@ function Library:Window(Options)
     })
 
     local ProfileFrame = Create("Frame", {
-        Size = UDim2.new(1, -20, 0, 64),
-        Position = UDim2.new(0, 10, 1, -74),
+        Size = UDim2.new(1, -20, 0, 54),
+        Position = UDim2.new(0, 10, 1, -64),
         BackgroundTransparency = 1,
         Parent = SidebarFrame
     })
     local AvatarShell = Create("Frame", {
-        Size = UDim2.fromOffset(54, 54),
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        AnchorPoint = Vector2.new(0.5, 0.5),
+        Size = UDim2.fromOffset(40, 40),
+        Position = UDim2.new(0, 0, 0.5, 0),
+        AnchorPoint = Vector2.new(0, 0.5),
         BackgroundColor3 = Theme.Main,
         BorderSizePixel = 0,
         Parent = ProfileFrame
@@ -477,6 +477,39 @@ function Library:Window(Options)
         Parent = AvatarShell
     })
     Create("UICorner", {CornerRadius = UDim.new(1, 0), Parent = AvatarImage})
+    local ProfileName = Create("TextLabel", {
+        Size = UDim2.new(1, -92, 0, 20),
+        Position = UDim2.new(0, 50, 0.5, -10),
+        BackgroundTransparency = 1,
+        Text = LocalPlayer.Name or "Player",
+        TextColor3 = Theme.TextPrimary,
+        Font = Theme.Font,
+        TextSize = 13,
+        TextTruncate = Enum.TextTruncate.AtEnd,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = ProfileFrame
+    })
+    local ConfigShortcut = Create("TextButton", {
+        Size = UDim2.fromOffset(32, 32),
+        Position = UDim2.new(1, 0, 0.5, 0),
+        AnchorPoint = Vector2.new(1, 0.5),
+        BackgroundColor3 = Theme.Main,
+        BackgroundTransparency = 0.18,
+        BorderSizePixel = 0,
+        Text = "",
+        AutoButtonColor = false,
+        Parent = ProfileFrame
+    })
+    Create("UICorner", {CornerRadius = UDim.new(0, 9), Parent = ConfigShortcut})
+    local ConfigShortcutIcon = Create("ImageLabel", {
+        Size = UDim2.fromOffset(16, 16),
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundTransparency = 1,
+        Image = Icons.Save,
+        ImageColor3 = Theme.TextSecondary,
+        Parent = ConfigShortcut
+    })
 
     task.spawn(function()
         local success, thumb = pcall(function()
@@ -550,10 +583,10 @@ function Library:Window(Options)
         SidebarFrame.Size = UDim2.new(0, SidebarWidth, 1, -(OuterPadding * 2))
 
         TabContainerNav.Position = UDim2.new(0, 10, 0, 10)
-        TabContainerNav.Size = UDim2.new(1, -20, 1, -94)
+        TabContainerNav.Size = UDim2.new(1, -20, 1, -84)
 
-        ProfileFrame.Position = UDim2.new(0, 10, 1, -74)
-        ProfileFrame.Size = UDim2.new(1, -20, 0, 64)
+        ProfileFrame.Position = UDim2.new(0, 10, 1, -64)
+        ProfileFrame.Size = UDim2.new(1, -20, 0, 54)
 
         ContentArea.Position = UDim2.new(0, ContentX, 0, OuterPadding)
         ContentArea.Size = UDim2.new(0, ContentWidth, 1, -(OuterPadding * 2))
@@ -609,6 +642,8 @@ function Library:Window(Options)
         AvatarShell.BackgroundColor3 = Theme.Main
         AvatarStroke.Color = Theme.Border
         AvatarImage.BackgroundColor3 = Theme.Search
+        ProfileName.TextColor3 = Theme.TextPrimary
+        ConfigShortcut.BackgroundColor3 = Theme.Main
         SearchBar.BackgroundColor3 = Theme.Search
         SearchStroke.Color = Theme.Border
         SearchIcon.ImageColor3 = Theme.TextSecondary
@@ -617,6 +652,15 @@ function Library:Window(Options)
         SearchContent.ScrollBarImageColor3 = Theme.Accent
         TabContainerNav.ScrollBarImageColor3 = Theme.Accent
         NoResultsLabel.TextColor3 = Theme.TextSecondary
+        if WindowObj.ConfigTab and WindowObj.CurrentTab == WindowObj.ConfigTab then
+            ConfigShortcut.BackgroundColor3 = Theme.Search
+            ConfigShortcut.BackgroundTransparency = 0
+            ConfigShortcutIcon.ImageColor3 = Theme.TabIconActive
+        else
+            ConfigShortcut.BackgroundColor3 = Theme.Main
+            ConfigShortcut.BackgroundTransparency = 0.18
+            ConfigShortcutIcon.ImageColor3 = Theme.TextSecondary
+        end
     end)
 
     function WindowObj:ToggleVisibility()
@@ -773,6 +817,7 @@ function Library:Window(Options)
     function WindowObj:Tab(Options)
         local TabTitle = Options.Title or "Tab"
         local TabIcon = Options.Icon or Icons.Placeholder
+        local ShowInSidebar = Options.ShowInSidebar ~= false
         local TabBtn = Create("TextButton", {
             Size = UDim2.new(1, 0, 0, TabButtonHeight),
             BackgroundTransparency = 0.18,
@@ -780,8 +825,10 @@ function Library:Window(Options)
             BorderSizePixel = 0,
             Text = "",
             AutoButtonColor = false,
-            Parent = TabContainerNav
         })
+        if ShowInSidebar then
+            TabBtn.Parent = TabContainerNav
+        end
         Create("UICorner", {CornerRadius = UDim.new(0, 10), Parent = TabBtn})
         local TabIconImage = Create("ImageLabel", {
             Size = UDim2.new(0, TabIconSize, 0, TabIconSize),
@@ -832,6 +879,7 @@ function Library:Window(Options)
             TabTitleLabel = TabTitleLabel,
             Title = TabTitle,
             Icon = TabIcon,
+            ShowInSidebar = ShowInSidebar,
             LayoutOrder = 0
         }
         table.insert(WindowObj.Tabs, TabObj)
@@ -850,31 +898,47 @@ function Library:Window(Options)
                     Tab.Canvas.Visible = false; Tab.Canvas.GroupTransparency = 1
                 end
 
-                TweenService:Create(Tab.TabButton, TweenFast, {BackgroundTransparency = 0.18, BackgroundColor3 = Theme.Main}):Play()
-                TweenService:Create(Tab.TabIconImage, TweenFast, {ImageColor3 = Theme.TabIconInactive}):Play()
-                TweenService:Create(Tab.TabTitleLabel, TweenFast, {TextColor3 = Theme.TextSecondary}):Play()
+                if Tab.ShowInSidebar then
+                    TweenService:Create(Tab.TabButton, TweenFast, {BackgroundTransparency = 0.18, BackgroundColor3 = Theme.Main}):Play()
+                    TweenService:Create(Tab.TabIconImage, TweenFast, {ImageColor3 = Theme.TabIconInactive}):Play()
+                    TweenService:Create(Tab.TabTitleLabel, TweenFast, {TextColor3 = Theme.TextSecondary}):Play()
+                end
             end
             
             TabObj.Canvas.Visible = true
             TabObj.Canvas.GroupTransparency = WindowObj.CurrentTab and 1 or 0
             TweenService:Create(TabObj.Canvas, TweenSmooth, {GroupTransparency = 0}):Play()
 
-            TweenService:Create(TabObj.TabButton, TweenFast, {BackgroundTransparency = 0, BackgroundColor3 = Theme.Search}):Play()
-            TweenService:Create(TabObj.TabIconImage, TweenFast, {ImageColor3 = Theme.TabIconActive}):Play()
-            TweenService:Create(TabObj.TabTitleLabel, TweenFast, {TextColor3 = Theme.TextPrimary}):Play()
+            if TabObj.ShowInSidebar then
+                TweenService:Create(TabObj.TabButton, TweenFast, {BackgroundTransparency = 0, BackgroundColor3 = Theme.Search}):Play()
+                TweenService:Create(TabObj.TabIconImage, TweenFast, {ImageColor3 = Theme.TabIconActive}):Play()
+                TweenService:Create(TabObj.TabTitleLabel, TweenFast, {TextColor3 = Theme.TextPrimary}):Play()
+            end
 
             WindowObj.CurrentTab = TabObj
+            local ConfigActive = WindowObj.ConfigTab and TabObj == WindowObj.ConfigTab
+            TweenService:Create(ConfigShortcut, TweenFast, {
+                BackgroundColor3 = ConfigActive and Theme.Search or Theme.Main,
+                BackgroundTransparency = ConfigActive and 0 or 0.18
+            }):Play()
+            TweenService:Create(ConfigShortcutIcon, TweenFast, {
+                ImageColor3 = ConfigActive and Theme.TabIconActive or Theme.TextSecondary
+            }):Play()
             if SearchBox.Text ~= "" then
                 TabObj.Canvas.Visible = false
             end
-            task.defer(function()
-                EnsureTabVisible(TabObj.TabButton)
-            end)
+            if TabObj.ShowInSidebar then
+                task.defer(function()
+                    EnsureTabVisible(TabObj.TabButton)
+                end)
+            end
         end
 
         function TabObj:Activate() ActivateTab() end
 
-        TabBtn.MouseButton1Click:Connect(ActivateTab)
+        if ShowInSidebar then
+            TabBtn.MouseButton1Click:Connect(ActivateTab)
+        end
         if #WindowObj.Tabs == 1 then ActivateTab() end
         task.defer(RelayoutSidebar)
 
@@ -1725,7 +1789,11 @@ function Library:Window(Options)
         return TabObj
     end
 
-    WindowObj.ConfigTab = WindowObj:Tab({Title = "Configuration", Icon = Icons.Save})
+    WindowObj.ConfigShortcut = ConfigShortcut
+    WindowObj.ConfigTab = WindowObj:Tab({Title = "Configuration", Icon = Icons.Save, ShowInSidebar = false})
+    ConfigShortcut.MouseButton1Click:Connect(function()
+        WindowObj.ConfigTab:Activate()
+    end)
 
     do
         local ConfigTab = WindowObj.ConfigTab
