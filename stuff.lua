@@ -817,136 +817,33 @@ function Library:Window(Options)
         function TabObj:Divider(DOpts)
             DOpts = type(DOpts) == "table" and DOpts or {Title = tostring(DOpts or "")}
             local CurrentTitle = tostring(DOpts.Title or DOpts.Text or "")
-            local LineInset = 12
-            local LineThickness = 2
-            local LabelPadX = 10
-            local LabelHeight = 18
-            local MinGap = 24
-            local RowHeight = (CurrentTitle ~= "" and 32 or 22)
+            local RowHeight = (CurrentTitle ~= "" and 24 or 8)
             local Row = CreateRow("", RowHeight, false)
             Row.Name = "SerpentDividerRow"
-
-            local function CreateDividerLine(props)
-                local line = Create("Frame", props)
-                Create("UICorner", {CornerRadius = UDim.new(1, 0), Parent = line})
-                return line
-            end
-
-            local FullLine = CreateDividerLine({
-                Size = UDim2.new(1, -(LineInset * 2), 0, LineThickness),
-                Position = UDim2.new(0, LineInset, 0.5, 0),
-                AnchorPoint = Vector2.new(0, 0.5),
-                BackgroundColor3 = Theme.TextSecondary,
-                BackgroundTransparency = 0,
-                BorderSizePixel = 0,
-                Parent = Row
-            })
-
-            local LeftLine = CreateDividerLine({
-                Size = UDim2.new(0.5, -(LineInset + MinGap), 0, LineThickness),
-                Position = UDim2.new(0, LineInset, 0.5, 0),
-                AnchorPoint = Vector2.new(0, 0.5),
-                BackgroundColor3 = Theme.TextSecondary,
-                BackgroundTransparency = 0,
-                BorderSizePixel = 0,
-                Visible = false,
-                Parent = Row
-            })
-
-            local RightLine = CreateDividerLine({
-                Size = UDim2.new(0.5, -(LineInset + MinGap), 0, LineThickness),
-                Position = UDim2.new(1, -LineInset, 0.5, 0),
-                AnchorPoint = Vector2.new(1, 0.5),
-                BackgroundColor3 = Theme.TextSecondary,
-                BackgroundTransparency = 0,
-                BorderSizePixel = 0,
-                Visible = false,
-                Parent = Row
-            })
-
-            local TitleCapsule = Create("Frame", {
-                Size = UDim2.new(0, 0, 0, LabelHeight),
-                Position = UDim2.new(0.5, 0, 0.5, 0),
-                AnchorPoint = Vector2.new(0.5, 0.5),
-                BackgroundColor3 = Theme.Main,
-                BorderSizePixel = 0,
-                Visible = false,
-                Parent = Row
-            })
-            Create("UICorner", {CornerRadius = UDim.new(0, 6), Parent = TitleCapsule})
-            local CapsuleStroke = Create("UIStroke", {
-                Color = Theme.Border,
-                Thickness = 1,
-                ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-                Parent = TitleCapsule
-            })
-
             local TitleLabel = Create("TextLabel", {
-                Size = UDim2.new(1, -(LabelPadX * 2), 1, 0),
-                Position = UDim2.new(0, LabelPadX, 0, 0),
+                Size = UDim2.new(1, -16, 1, 0),
+                Position = UDim2.new(0, 8, 0, 0),
                 BackgroundTransparency = 1,
-                Text = "",
+                Text = CurrentTitle,
                 TextColor3 = Theme.TextSecondary,
-                Font = Theme.Font,
+                Font = Enum.Font.GothamSemibold,
                 TextSize = 12,
-                TextXAlignment = Enum.TextXAlignment.Center,
-                Parent = TitleCapsule
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Visible = CurrentTitle ~= "",
+                Parent = Row
             })
-
-            local function SetSplitGap(totalGap)
-                local resolvedGap = math.max(MinGap, tonumber(totalGap) or MinGap)
-                local halfGap = math.floor(resolvedGap * 0.5)
-                LeftLine.Size = UDim2.new(0.5, -(LineInset + halfGap), 0, LineThickness)
-                RightLine.Size = UDim2.new(0.5, -(LineInset + halfGap), 0, LineThickness)
-            end
-
-            local function RefreshDivider()
-                local hasTitle = CurrentTitle ~= ""
-                if hasTitle then
-                    local displayText = tostring(CurrentTitle)
-                    local textWidth = TextService:GetTextSize(
-                        displayText,
-                        TitleLabel.TextSize,
-                        TitleLabel.Font,
-                        Vector2.new(10000, LabelHeight)
-                    ).X
-                    local capsuleWidth = math.max(40, textWidth + (LabelPadX * 2))
-
-                    TitleLabel.Text = displayText
-                    TitleCapsule.Size = UDim2.new(0, capsuleWidth, 0, LabelHeight)
-                    TitleCapsule.Visible = true
-
-                    SetSplitGap(capsuleWidth + 12)
-                    FullLine.Visible = false
-                    LeftLine.Visible = true
-                    RightLine.Visible = true
-                else
-                    TitleLabel.Text = ""
-                    TitleCapsule.Visible = false
-                    SetSplitGap(MinGap)
-                    FullLine.Visible = true
-                    LeftLine.Visible = false
-                    RightLine.Visible = false
-                end
-            end
-
             ThemeUpdate(function()
-                FullLine.BackgroundColor3 = Theme.TextSecondary
-                LeftLine.BackgroundColor3 = Theme.TextSecondary
-                RightLine.BackgroundColor3 = Theme.TextSecondary
-                TitleCapsule.BackgroundColor3 = Theme.Main
-                CapsuleStroke.Color = Theme.Border
                 TitleLabel.TextColor3 = Theme.TextSecondary
             end)
-
-            RefreshDivider()
 
             local DividerObj = {Row = Row}
             function DividerObj:GetComponentType() return "Divider" end
             function DividerObj:GetText() return CurrentTitle end
             function DividerObj:SetText(newText)
                 CurrentTitle = tostring(newText or "")
-                RefreshDivider()
+                TitleLabel.Text = CurrentTitle
+                TitleLabel.Visible = CurrentTitle ~= ""
+                Row.Size = UDim2.new(1, 0, 0, (CurrentTitle ~= "" and 24 or 8))
             end
             return DividerObj
         end
