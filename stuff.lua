@@ -432,20 +432,23 @@ function Library:Window(Options)
     local ProfileName = Create("TextLabel", {Size = UDim2.new(1, -52, 0, 20), Position = UDim2.new(0, 52, 0.5, -18), BackgroundTransparency = 1, Text = LocalPlayer.DisplayName or "User", TextColor3 = Theme.TextPrimary, Font = Theme.Font, TextSize = 15, TextXAlignment = Enum.TextXAlignment.Left, Parent = ProfileFrame})
     local ProfileSub = Create("TextLabel", {Size = UDim2.new(1, -52, 0, 16), Position = UDim2.new(0, 52, 0.5, 2), BackgroundTransparency = 1, Text = SubTitle, TextColor3 = Theme.TextSecondary, Font = Theme.Font, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left, Parent = ProfileFrame})
 
+    local TabButtonSize = 30
+    local TabIconSize = 16
+    local TabButtonGap = 4
     local TabContainerNav = Create("Frame", {Size = UDim2.new(0, 300, 1, 0), Position = UDim2.new(0.5, -150, 0, 0), BackgroundTransparency = 1, Parent = BottomBar})
-    local TabNavLayout = Create("UIListLayout", {FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Center, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 12), Parent = TabContainerNav})
+    local TabNavLayout = Create("UIListLayout", {FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Center, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, TabButtonGap), Parent = TabContainerNav})
 
     local ActionContainer = Create("Frame", {Size = UDim2.new(0, 250, 1, 0), Position = UDim2.new(1, -270, 0, 0), BackgroundTransparency = 1, Parent = BottomBar})
     local ActionLayout = Create("UIListLayout", {FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 12), Parent = ActionContainer})
     
-    local SaveBtn = Create("TextButton", {Size = UDim2.new(0, 40, 0, 40), BackgroundColor3 = Theme.Search, Text = "", AutoButtonColor = false, LayoutOrder = 2, Parent = ActionContainer})
-    Create("UICorner", {CornerRadius = UDim.new(0, 8), Parent = SaveBtn})
-    local SaveIcon = Create("ImageLabel", {Size = UDim2.new(0, 20, 0, 20), Position = UDim2.new(0.5, 0, 0.5, 0), AnchorPoint = Vector2.new(0.5, 0.5), BackgroundTransparency = 1, Image = Icons.Save, ImageColor3 = Theme.TextSecondary, Parent = SaveBtn})
+    local SaveBtn = Create("TextButton", {Size = UDim2.new(0, 34, 0, 34), BackgroundColor3 = Theme.Search, Text = "", AutoButtonColor = false, LayoutOrder = 2, Parent = ActionContainer})
+    Create("UICorner", {CornerRadius = UDim.new(0, 7), Parent = SaveBtn})
+    local SaveIcon = Create("ImageLabel", {Size = UDim2.new(0, 16, 0, 16), Position = UDim2.new(0.5, 0, 0.5, 0), AnchorPoint = Vector2.new(0.5, 0.5), BackgroundTransparency = 1, Image = Icons.Save, ImageColor3 = Theme.TextSecondary, Parent = SaveBtn})
 
-    local SearchBar = Create("Frame", {Size = UDim2.new(0, 160, 0, 40), BackgroundColor3 = Theme.Search, LayoutOrder = 1, Parent = ActionContainer})
-    Create("UICorner", {CornerRadius = UDim.new(0, 8), Parent = SearchBar})
-    local SearchIcon = Create("ImageLabel", {Size = UDim2.new(0, 16, 0, 16), Position = UDim2.new(0, 12, 0.5, -8), BackgroundTransparency = 1, Image = Icons.Search, ImageColor3 = Theme.TextSecondary, Parent = SearchBar})
-    local SearchBox = Create("TextBox", {Size = UDim2.new(1, -40, 1, 0), Position = UDim2.new(0, 36, 0, 0), BackgroundTransparency = 1, Text = "", PlaceholderText = "Search...", TextColor3 = Theme.TextPrimary, PlaceholderColor3 = Theme.TextSecondary, Font = Theme.Font, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left, Parent = SearchBar})
+    local SearchBar = Create("Frame", {Size = UDim2.new(0, 160, 0, 34), BackgroundColor3 = Theme.Search, LayoutOrder = 1, Parent = ActionContainer})
+    Create("UICorner", {CornerRadius = UDim.new(0, 7), Parent = SearchBar})
+    local SearchIcon = Create("ImageLabel", {Size = UDim2.new(0, 14, 0, 14), Position = UDim2.new(0, 10, 0.5, -7), BackgroundTransparency = 1, Image = Icons.Search, ImageColor3 = Theme.TextSecondary, Parent = SearchBar})
+    local SearchBox = Create("TextBox", {Size = UDim2.new(1, -36, 1, 0), Position = UDim2.new(0, 30, 0, 0), BackgroundTransparency = 1, Text = "", PlaceholderText = "Search...", TextColor3 = Theme.TextPrimary, PlaceholderColor3 = Theme.TextSecondary, Font = Theme.Font, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left, Parent = SearchBar})
 
     local function Clamp(Value, Min, Max)
         return math.max(Min, math.min(Max, Value))
@@ -455,21 +458,26 @@ function Library:Window(Options)
         local BarWidth = BottomBar.AbsoluteSize.X
         if BarWidth <= 0 then return end
 
-        local EdgePadding = 20
-        local SectionGap = 12
-        local MinProfile = 54
-        local MinNav = 40
+        local EdgePadding = 14
+        local SectionGap = 8
+        local MinProfile = 44
+        local MinNav = 100
         local MinAction = 52
-        local PrefProfile = 200
-        local PrefAction = 250
+        local PrefProfile = 170
+        local PrefAction = 220
 
         local UsableWidth = math.max(0, BarWidth - (EdgePadding * 2))
-        local ProfileWidth = Clamp(math.floor(UsableWidth * 0.28), MinProfile, PrefProfile)
-        local ActionWidth = Clamp(math.floor(UsableWidth * 0.34), MinAction, PrefAction)
+        local ProfileWidth = Clamp(math.floor(UsableWidth * 0.22), MinProfile, PrefProfile)
+        local ActionWidth = Clamp(math.floor(UsableWidth * 0.26), MinAction, PrefAction)
         local NavWidth = UsableWidth - ProfileWidth - ActionWidth - (SectionGap * 2)
+        local ActiveTabs = 0
+        for _, t in ipairs(WindowObj.Tabs) do
+            if not t.IsConfig then ActiveTabs += 1 end
+        end
+        local DesiredNavWidth = math.max(MinNav, (ActiveTabs * TabButtonSize) + (math.max(0, ActiveTabs - 1) * TabButtonGap))
 
-        if NavWidth < MinNav then
-            local Missing = MinNav - NavWidth
+        if NavWidth < DesiredNavWidth then
+            local Missing = DesiredNavWidth - NavWidth
             local FromAction = math.min(Missing, ActionWidth - MinAction)
             ActionWidth = ActionWidth - FromAction
             Missing = Missing - FromAction
@@ -489,19 +497,19 @@ function Library:Window(Options)
         ActionContainer.Position = UDim2.new(0, X, 0, 0)
         ActionContainer.Size = UDim2.new(0, ActionWidth, 1, 0)
 
-        local DynamicGap = (ActionWidth < 190 or NavWidth < 130) and 8 or 12
+        local DynamicGap = (ActionWidth < 180 or NavWidth < DesiredNavWidth) and 4 or 6
         ActionLayout.Padding = UDim.new(0, DynamicGap)
         TabNavLayout.Padding = UDim.new(0, DynamicGap)
 
         local SearchWidth = ActionWidth - SaveBtn.Size.X.Offset - DynamicGap
-        if SearchWidth < 90 then
+        if SearchWidth < 96 then
             SearchBar.Visible = false
         else
             SearchBar.Visible = true
-            SearchBar.Size = UDim2.new(0, SearchWidth, 0, 40)
+            SearchBar.Size = UDim2.new(0, SearchWidth, 0, 34)
         end
 
-        local ShowProfileText = ProfileWidth >= 140
+        local ShowProfileText = ProfileWidth >= 120
         ProfileName.Visible = ShowProfileText
         ProfileSub.Visible = ShowProfileText
     end
@@ -701,11 +709,11 @@ function Library:Window(Options)
         local TabIcon = Options.Icon or Icons.Placeholder
         local IsConfig = Options.IsConfig or false
 
-        local TabBtn = Create("TextButton", {Size = UDim2.new(0, 40, 0, 40), BackgroundTransparency = 1, BackgroundColor3 = Theme.Search, Text = "", AutoButtonColor = false})
+        local TabBtn = Create("TextButton", {Size = UDim2.new(0, TabButtonSize, 0, TabButtonSize), BackgroundTransparency = 1, BackgroundColor3 = Theme.Search, Text = "", AutoButtonColor = false})
         if not IsConfig then TabBtn.Parent = TabContainerNav end
         
-        Create("UICorner", {CornerRadius = UDim.new(0, 8), Parent = TabBtn})
-        local TabIconImage = Create("ImageLabel", {Size = UDim2.new(0, 20, 0, 20), Position = UDim2.new(0.5, 0, 0.5, 0), AnchorPoint = Vector2.new(0.5, 0.5), BackgroundTransparency = 1, Image = TabIcon, ImageColor3 = Theme.TabIconInactive, Parent = TabBtn})
+        Create("UICorner", {CornerRadius = UDim.new(0, 7), Parent = TabBtn})
+        local TabIconImage = Create("ImageLabel", {Size = UDim2.new(0, TabIconSize, 0, TabIconSize), Position = UDim2.new(0.5, 0, 0.5, 0), AnchorPoint = Vector2.new(0.5, 0.5), BackgroundTransparency = 1, Image = TabIcon, ImageColor3 = Theme.TabIconInactive, Parent = TabBtn})
 
         local TabCanvas = Create("CanvasGroup", {Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, GroupTransparency = 1, Visible = false, Parent = TabContainer})
         local TabContent = Create("ScrollingFrame", {Size = UDim2.new(1, -30, 1, -40), Position = UDim2.new(0, 20, 0, 20), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, ScrollBarImageColor3 = Theme.Accent, CanvasSize = UDim2.new(0, 0, 0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y, Parent = TabCanvas})
@@ -770,6 +778,7 @@ function Library:Window(Options)
             local ActiveTabsCount = 0
             for _, t in WindowObj.Tabs do if not t.IsConfig then ActiveTabsCount += 1 end end
             if ActiveTabsCount == 1 then ActivateTab() end
+            task.defer(RelayoutBottomBar)
         end
 
         local function CreateRow(ComponentTitle, Height, IncludeInSearch)
