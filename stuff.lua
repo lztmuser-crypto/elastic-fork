@@ -15,6 +15,8 @@ local Theme = {
     Search = Color3.fromRGB(35, 35, 45),
     TextPrimary = Color3.fromRGB(240, 240, 245),
     TextSecondary = Color3.fromRGB(130, 130, 145),
+    TabIconInactive = Color3.fromRGB(128, 128, 138),
+    TabIconActive = Color3.fromRGB(172, 172, 184),
     Accent = Color3.fromRGB(225, 225, 245),
     Border = Color3.fromRGB(45, 45, 58),
     Font = Enum.Font.GothamMedium
@@ -703,7 +705,7 @@ function Library:Window(Options)
         if not IsConfig then TabBtn.Parent = TabContainerNav end
         
         Create("UICorner", {CornerRadius = UDim.new(0, 8), Parent = TabBtn})
-        local TabIconImage = Create("ImageLabel", {Size = UDim2.new(0, 20, 0, 20), Position = UDim2.new(0.5, 0, 0.5, 0), AnchorPoint = Vector2.new(0.5, 0.5), BackgroundTransparency = 1, Image = TabIcon, ImageColor3 = Theme.TextSecondary, Parent = TabBtn})
+        local TabIconImage = Create("ImageLabel", {Size = UDim2.new(0, 20, 0, 20), Position = UDim2.new(0.5, 0, 0.5, 0), AnchorPoint = Vector2.new(0.5, 0.5), BackgroundTransparency = 1, Image = TabIcon, ImageColor3 = Theme.TabIconInactive, Parent = TabBtn})
 
         local TabCanvas = Create("CanvasGroup", {Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, GroupTransparency = 1, Visible = false, Parent = TabContainer})
         local TabContent = Create("ScrollingFrame", {Size = UDim2.new(1, -30, 1, -40), Position = UDim2.new(0, 20, 0, 20), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, ScrollBarImageColor3 = Theme.Accent, CanvasSize = UDim2.new(0, 0, 0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y, Parent = TabCanvas})
@@ -712,10 +714,10 @@ function Library:Window(Options)
         ThemeUpdate(function()
             if WindowObj.CurrentTab and WindowObj.CurrentTab.TabButton == TabBtn then
                 TabBtn.BackgroundColor3 = Theme.Search
-                TabIconImage.ImageColor3 = Theme.Accent
+                TabIconImage.ImageColor3 = Theme.TabIconActive
             else
                 TabBtn.BackgroundColor3 = Theme.Sidebar
-                TabIconImage.ImageColor3 = Theme.TextSecondary
+                TabIconImage.ImageColor3 = Theme.TabIconInactive
             end
             TabContent.ScrollBarImageColor3 = Theme.Accent
         end)
@@ -742,7 +744,7 @@ function Library:Window(Options)
                     TweenService:Create(SaveIcon, TweenFast, {ImageColor3 = Theme.TextSecondary}):Play()
                 else
                     TweenService:Create(Tab.TabButton, TweenFast, {BackgroundTransparency = 1}):Play()
-                    TweenService:Create(Tab.TabButton:FindFirstChildOfClass("ImageLabel"), TweenFast, {ImageColor3 = Theme.TextSecondary}):Play()
+                    TweenService:Create(Tab.TabButton:FindFirstChildOfClass("ImageLabel"), TweenFast, {ImageColor3 = Theme.TabIconInactive}):Play()
                 end
             end
             
@@ -755,7 +757,7 @@ function Library:Window(Options)
                 TweenService:Create(SaveIcon, TweenFast, {ImageColor3 = Color3.fromRGB(17, 17, 17)}):Play()
             else
                 TweenService:Create(TabObj.TabButton, TweenFast, {BackgroundTransparency = 0}):Play()
-                TweenService:Create(TabObj.TabButton:FindFirstChildOfClass("ImageLabel"), TweenFast, {ImageColor3 = Theme.Accent}):Play()
+                TweenService:Create(TabObj.TabButton:FindFirstChildOfClass("ImageLabel"), TweenFast, {ImageColor3 = Theme.TabIconActive}):Play()
             end
 
             WindowObj.CurrentTab = TabObj
@@ -770,7 +772,7 @@ function Library:Window(Options)
             if ActiveTabsCount == 1 then ActivateTab() end
         end
 
-        local function CreateRow(ComponentTitle, Height, NoSeparator, IncludeInSearch)
+        local function CreateRow(ComponentTitle, Height, IncludeInSearch)
             TabObj.LayoutOrder = TabObj.LayoutOrder + 1
             local Row = Create("Frame", {Size = UDim2.new(1, 0, 0, Height or 40), BackgroundTransparency = 1, LayoutOrder = TabObj.LayoutOrder, Parent = TabContent})
             if IncludeInSearch ~= false then
@@ -784,7 +786,7 @@ function Library:Window(Options)
             local CurrentText = tostring(NOpts.Text or NOpts.Title or "")
             local UsePrimary = NOpts.Primary == true
 
-            local Row = CreateRow("", 28, true, false)
+            local Row = CreateRow("", 28, false)
             local NoteLabel = Create("TextLabel", {
                 Size = UDim2.new(1, -16, 1, 0),
                 Position = UDim2.new(0, 8, 0, 0),
@@ -815,10 +817,14 @@ function Library:Window(Options)
         function TabObj:Divider(DOpts)
             DOpts = type(DOpts) == "table" and DOpts or {Title = tostring(DOpts or "")}
             local CurrentTitle = tostring(DOpts.Title or DOpts.Text or "")
-            local LineInset = 14
-            local BaseMidGap = 36
+            local LineInset = 12
             local LineThickness = 2
-            local Row = CreateRow("", (CurrentTitle ~= "" and 30 or 20), true, false)
+            local LabelPadX = 10
+            local LabelHeight = 18
+            local MinGap = 24
+            local RowHeight = (CurrentTitle ~= "" and 32 or 22)
+            local Row = CreateRow("", RowHeight, false)
+            Row.Name = "SerpentDividerRow"
 
             local function CreateDividerLine(props)
                 local line = Create("Frame", props)
@@ -830,17 +836,17 @@ function Library:Window(Options)
                 Size = UDim2.new(1, -(LineInset * 2), 0, LineThickness),
                 Position = UDim2.new(0, LineInset, 0.5, 0),
                 AnchorPoint = Vector2.new(0, 0.5),
-                BackgroundColor3 = Theme.Border,
+                BackgroundColor3 = Theme.TextSecondary,
                 BackgroundTransparency = 0,
                 BorderSizePixel = 0,
                 Parent = Row
             })
 
             local LeftLine = CreateDividerLine({
-                Size = UDim2.new(0.5, -(LineInset + BaseMidGap), 0, LineThickness),
+                Size = UDim2.new(0.5, -(LineInset + MinGap), 0, LineThickness),
                 Position = UDim2.new(0, LineInset, 0.5, 0),
                 AnchorPoint = Vector2.new(0, 0.5),
-                BackgroundColor3 = Theme.Border,
+                BackgroundColor3 = Theme.TextSecondary,
                 BackgroundTransparency = 0,
                 BorderSizePixel = 0,
                 Visible = false,
@@ -848,65 +854,88 @@ function Library:Window(Options)
             })
 
             local RightLine = CreateDividerLine({
-                Size = UDim2.new(0.5, -(LineInset + BaseMidGap), 0, LineThickness),
+                Size = UDim2.new(0.5, -(LineInset + MinGap), 0, LineThickness),
                 Position = UDim2.new(1, -LineInset, 0.5, 0),
                 AnchorPoint = Vector2.new(1, 0.5),
-                BackgroundColor3 = Theme.Border,
+                BackgroundColor3 = Theme.TextSecondary,
                 BackgroundTransparency = 0,
                 BorderSizePixel = 0,
                 Visible = false,
                 Parent = Row
             })
 
-            local TitleLabel = Create("TextLabel", {
-                Size = UDim2.new(0, 0, 1, 0),
-                AutomaticSize = Enum.AutomaticSize.X,
+            local TitleCapsule = Create("Frame", {
+                Size = UDim2.new(0, 0, 0, LabelHeight),
                 Position = UDim2.new(0.5, 0, 0.5, 0),
                 AnchorPoint = Vector2.new(0.5, 0.5),
-                BackgroundTransparency = 1,
-                Text = CurrentTitle,
-                TextColor3 = Theme.TextSecondary,
-                Font = Theme.Font,
-                TextSize = 12,
+                BackgroundColor3 = Theme.Main,
+                BorderSizePixel = 0,
                 Visible = false,
                 Parent = Row
             })
+            Create("UICorner", {CornerRadius = UDim.new(0, 6), Parent = TitleCapsule})
+            local CapsuleStroke = Create("UIStroke", {
+                Color = Theme.Border,
+                Thickness = 1,
+                ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+                Parent = TitleCapsule
+            })
 
-            local function SetSplitGap(gap)
-                local resolvedGap = math.max(BaseMidGap, tonumber(gap) or BaseMidGap)
-                LeftLine.Size = UDim2.new(0.5, -(LineInset + resolvedGap), 0, LineThickness)
-                RightLine.Size = UDim2.new(0.5, -(LineInset + resolvedGap), 0, LineThickness)
+            local TitleLabel = Create("TextLabel", {
+                Size = UDim2.new(1, -(LabelPadX * 2), 1, 0),
+                Position = UDim2.new(0, LabelPadX, 0, 0),
+                BackgroundTransparency = 1,
+                Text = "",
+                TextColor3 = Theme.TextSecondary,
+                Font = Theme.Font,
+                TextSize = 12,
+                TextXAlignment = Enum.TextXAlignment.Center,
+                Parent = TitleCapsule
+            })
+
+            local function SetSplitGap(totalGap)
+                local resolvedGap = math.max(MinGap, tonumber(totalGap) or MinGap)
+                local halfGap = math.floor(resolvedGap * 0.5)
+                LeftLine.Size = UDim2.new(0.5, -(LineInset + halfGap), 0, LineThickness)
+                RightLine.Size = UDim2.new(0.5, -(LineInset + halfGap), 0, LineThickness)
             end
 
             local function RefreshDivider()
                 local hasTitle = CurrentTitle ~= ""
                 if hasTitle then
-                    TitleLabel.Text = string.format(" %s ", CurrentTitle)
+                    local displayText = tostring(CurrentTitle)
                     local textWidth = TextService:GetTextSize(
-                        TitleLabel.Text,
+                        displayText,
                         TitleLabel.TextSize,
                         TitleLabel.Font,
-                        Vector2.new(10000, 24)
+                        Vector2.new(10000, LabelHeight)
                     ).X
-                    SetSplitGap(math.floor((textWidth + 24) * 0.5))
+                    local capsuleWidth = math.max(40, textWidth + (LabelPadX * 2))
+
+                    TitleLabel.Text = displayText
+                    TitleCapsule.Size = UDim2.new(0, capsuleWidth, 0, LabelHeight)
+                    TitleCapsule.Visible = true
+
+                    SetSplitGap(capsuleWidth + 12)
                     FullLine.Visible = false
                     LeftLine.Visible = true
                     RightLine.Visible = true
-                    TitleLabel.Visible = true
                 else
                     TitleLabel.Text = ""
-                    SetSplitGap(BaseMidGap)
+                    TitleCapsule.Visible = false
+                    SetSplitGap(MinGap)
                     FullLine.Visible = true
                     LeftLine.Visible = false
                     RightLine.Visible = false
-                    TitleLabel.Visible = false
                 end
             end
 
             ThemeUpdate(function()
-                FullLine.BackgroundColor3 = Theme.Border
-                LeftLine.BackgroundColor3 = Theme.Border
-                RightLine.BackgroundColor3 = Theme.Border
+                FullLine.BackgroundColor3 = Theme.TextSecondary
+                LeftLine.BackgroundColor3 = Theme.TextSecondary
+                RightLine.BackgroundColor3 = Theme.TextSecondary
+                TitleCapsule.BackgroundColor3 = Theme.Main
+                CapsuleStroke.Color = Theme.Border
                 TitleLabel.TextColor3 = Theme.TextSecondary
             end)
 
@@ -1581,7 +1610,7 @@ function Library:Window(Options)
             Create("UIPadding", {PaddingTop = UDim.new(0, 4), PaddingBottom = UDim.new(0, 4), Parent = DropdownMenu})
             local MenuLayout = Create("UIListLayout", {SortOrder = Enum.SortOrder.LayoutOrder, Parent = DropdownMenu})
 
-            local OptionButtons, Separators, IsOpen, RenderConnection = {}, {}, false, nil
+            local OptionButtons, IsOpen, RenderConnection = {}, false, nil
             
             local function CloseDropdown()
                 IsOpen = false
@@ -1612,8 +1641,7 @@ function Library:Window(Options)
             local function SetOptionsList(newOptions)
                 OptionsList = type(newOptions) == "table" and newOptions or {}
                 for _, btn in OptionButtons do btn:Destroy() end
-                for _, sep in Separators do sep:Destroy() end
-                table.clear(OptionButtons); table.clear(Separators)
+                table.clear(OptionButtons)
 
                 local newSelected = {}
                 for _, item in SelectedItems do if table.find(OptionsList, item) then table.insert(newSelected, item) end end
