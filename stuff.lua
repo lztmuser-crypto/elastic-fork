@@ -773,21 +773,6 @@ function Library:Window(Options)
         local function CreateRow(ComponentTitle, Height, NoSeparator, IncludeInSearch)
             TabObj.LayoutOrder = TabObj.LayoutOrder + 1
             local Row = Create("Frame", {Size = UDim2.new(1, 0, 0, Height or 40), BackgroundTransparency = 1, LayoutOrder = TabObj.LayoutOrder, Parent = TabContent})
-            if not NoSeparator then
-                local RowSep = Create("Frame", {
-                    Size = UDim2.new(1, -14, 0, 2),
-                    Position = UDim2.new(0, 7, 1, -2),
-                    BackgroundColor3 = Theme.TextSecondary,
-                    BackgroundTransparency = 0,
-                    BorderSizePixel = 0,
-                    ZIndex = 25,
-                    Parent = Row
-                })
-                Create("UICorner", {CornerRadius = UDim.new(1, 0), Parent = RowSep})
-                ThemeUpdate(function()
-                    RowSep.BackgroundColor3 = Theme.TextSecondary
-                end)
-            end
             if IncludeInSearch ~= false then
                 table.insert(WindowObj.AllRows, {Row = Row, OriginalParent = TabContent, Title = ComponentTitle or ""})
             end
@@ -831,8 +816,8 @@ function Library:Window(Options)
             DOpts = type(DOpts) == "table" and DOpts or {Title = tostring(DOpts or "")}
             local CurrentTitle = tostring(DOpts.Title or DOpts.Text or "")
             local LineInset = 14
-            local MidGap = 36
-            local LineThickness = 3
+            local BaseMidGap = 36
+            local LineThickness = 2
             local Row = CreateRow("", (CurrentTitle ~= "" and 30 or 20), true, false)
 
             local function CreateDividerLine(props)
@@ -845,17 +830,17 @@ function Library:Window(Options)
                 Size = UDim2.new(1, -(LineInset * 2), 0, LineThickness),
                 Position = UDim2.new(0, LineInset, 0.5, 0),
                 AnchorPoint = Vector2.new(0, 0.5),
-                BackgroundColor3 = Theme.TextSecondary,
+                BackgroundColor3 = Theme.Border,
                 BackgroundTransparency = 0,
                 BorderSizePixel = 0,
                 Parent = Row
             })
 
             local LeftLine = CreateDividerLine({
-                Size = UDim2.new(0.5, -(LineInset + MidGap), 0, LineThickness),
+                Size = UDim2.new(0.5, -(LineInset + BaseMidGap), 0, LineThickness),
                 Position = UDim2.new(0, LineInset, 0.5, 0),
                 AnchorPoint = Vector2.new(0, 0.5),
-                BackgroundColor3 = Theme.TextSecondary,
+                BackgroundColor3 = Theme.Border,
                 BackgroundTransparency = 0,
                 BorderSizePixel = 0,
                 Visible = false,
@@ -863,10 +848,10 @@ function Library:Window(Options)
             })
 
             local RightLine = CreateDividerLine({
-                Size = UDim2.new(0.5, -(LineInset + MidGap), 0, LineThickness),
+                Size = UDim2.new(0.5, -(LineInset + BaseMidGap), 0, LineThickness),
                 Position = UDim2.new(1, -LineInset, 0.5, 0),
                 AnchorPoint = Vector2.new(1, 0.5),
-                BackgroundColor3 = Theme.TextSecondary,
+                BackgroundColor3 = Theme.Border,
                 BackgroundTransparency = 0,
                 BorderSizePixel = 0,
                 Visible = false,
@@ -880,23 +865,37 @@ function Library:Window(Options)
                 AnchorPoint = Vector2.new(0.5, 0.5),
                 BackgroundTransparency = 1,
                 Text = CurrentTitle,
-                TextColor3 = Theme.TextPrimary,
+                TextColor3 = Theme.TextSecondary,
                 Font = Theme.Font,
                 TextSize = 12,
                 Visible = false,
                 Parent = Row
             })
 
+            local function SetSplitGap(gap)
+                local resolvedGap = math.max(BaseMidGap, tonumber(gap) or BaseMidGap)
+                LeftLine.Size = UDim2.new(0.5, -(LineInset + resolvedGap), 0, LineThickness)
+                RightLine.Size = UDim2.new(0.5, -(LineInset + resolvedGap), 0, LineThickness)
+            end
+
             local function RefreshDivider()
                 local hasTitle = CurrentTitle ~= ""
                 if hasTitle then
-                    TitleLabel.Text = string.format("BORDER %s ---------------- BORDER", CurrentTitle)
+                    TitleLabel.Text = string.format(" %s ", CurrentTitle)
+                    local textWidth = TextService:GetTextSize(
+                        TitleLabel.Text,
+                        TitleLabel.TextSize,
+                        TitleLabel.Font,
+                        Vector2.new(10000, 24)
+                    ).X
+                    SetSplitGap(math.floor((textWidth + 24) * 0.5))
                     FullLine.Visible = false
-                    LeftLine.Visible = false
-                    RightLine.Visible = false
+                    LeftLine.Visible = true
+                    RightLine.Visible = true
                     TitleLabel.Visible = true
                 else
                     TitleLabel.Text = ""
+                    SetSplitGap(BaseMidGap)
                     FullLine.Visible = true
                     LeftLine.Visible = false
                     RightLine.Visible = false
@@ -905,10 +904,10 @@ function Library:Window(Options)
             end
 
             ThemeUpdate(function()
-                FullLine.BackgroundColor3 = Theme.TextSecondary
-                LeftLine.BackgroundColor3 = Theme.TextSecondary
-                RightLine.BackgroundColor3 = Theme.TextSecondary
-                TitleLabel.TextColor3 = Theme.TextPrimary
+                FullLine.BackgroundColor3 = Theme.Border
+                LeftLine.BackgroundColor3 = Theme.Border
+                RightLine.BackgroundColor3 = Theme.Border
+                TitleLabel.TextColor3 = Theme.TextSecondary
             end)
 
             RefreshDivider()
