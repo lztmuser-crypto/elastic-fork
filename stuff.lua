@@ -435,8 +435,21 @@ function Library:Window(Options)
     local TabButtonSize = 30
     local TabIconSize = 16
     local TabButtonGap = 4
-    local TabContainerNav = Create("Frame", {Size = UDim2.new(0, 300, 1, 0), Position = UDim2.new(0.5, -150, 0, 0), BackgroundTransparency = 1, Parent = BottomBar})
-    local TabNavLayout = Create("UIListLayout", {FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Center, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, TabButtonGap), Parent = TabContainerNav})
+    local TabContainerNav = Create("ScrollingFrame", {
+        Size = UDim2.new(0, 300, 1, 0),
+        Position = UDim2.new(0.5, -150, 0, 0),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        AutomaticCanvasSize = Enum.AutomaticSize.X,
+        ScrollingDirection = Enum.ScrollingDirection.X,
+        ScrollBarThickness = 3,
+        ScrollingEnabled = true,
+        Active = true,
+        Parent = BottomBar,
+    })
+    local TabNavLayout = Create("UIListLayout", {FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Left, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, TabButtonGap), Parent = TabContainerNav})
+    Create("UIPadding", {PaddingLeft = UDim.new(0, 2), PaddingRight = UDim.new(0, 2), Parent = TabContainerNav})
 
     local ActionContainer = Create("Frame", {Size = UDim2.new(0, 250, 1, 0), Position = UDim2.new(1, -270, 0, 0), BackgroundTransparency = 1, Parent = BottomBar})
     local ActionLayout = Create("UIListLayout", {FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Right, VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, 12), Parent = ActionContainer})
@@ -514,6 +527,27 @@ function Library:Window(Options)
         ProfileSub.Visible = ShowProfileText
     end
 
+    local function EnsureTabVisible(TabButton)
+        if not TabButton or not TabButton.Parent then return end
+        local navWidth = TabContainerNav.AbsoluteSize.X
+        if navWidth <= 0 then return end
+        local navPos = TabContainerNav.AbsolutePosition
+        local btnPos = TabButton.AbsolutePosition
+        local left = btnPos.X - navPos.X
+        local right = left + TabButton.AbsoluteSize.X
+        local canvasX = TabContainerNav.CanvasPosition.X
+        local targetX = canvasX
+        if left < 0 then
+            targetX = canvasX + left - 6
+        elseif right > navWidth then
+            targetX = canvasX + (right - navWidth) + 6
+        end
+        local maxX = math.max(0, TabContainerNav.AbsoluteCanvasSize.X - navWidth)
+        if targetX ~= canvasX then
+            TabContainerNav.CanvasPosition = Vector2.new(math.clamp(targetX, 0, maxX), 0)
+        end
+    end
+
     local ContentArea = Create("Frame", {Size = UDim2.new(1, 0, 1, -64), Position = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1, Parent = MainFrame})
     local TabContainer = Create("Frame", {Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Parent = ContentArea})
     
@@ -542,6 +576,7 @@ function Library:Window(Options)
         SearchBox.TextColor3 = Theme.TextPrimary
         SearchBox.PlaceholderColor3 = Theme.TextSecondary
         SearchContent.ScrollBarImageColor3 = Theme.Accent
+        TabContainerNav.ScrollBarImageColor3 = Theme.Accent
         NoResultsLabel.TextColor3 = Theme.TextSecondary
         
         if WindowObj.CurrentTab and WindowObj.CurrentTab.IsConfig then
@@ -769,6 +804,11 @@ function Library:Window(Options)
             end
 
             WindowObj.CurrentTab = TabObj
+            if not TabObj.IsConfig then
+                task.defer(function()
+                    EnsureTabVisible(TabObj.TabButton)
+                end)
+            end
         end
 
         function TabObj:Activate() ActivateTab() end
