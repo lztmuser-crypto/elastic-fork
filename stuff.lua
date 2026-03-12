@@ -821,8 +821,8 @@ function Library:Window(Options)
             local CurrentTitle = tostring(DOpts.Title or DOpts.Text or "")
             local LineInset = 14
             local MidGap = 36
-            local LineThickness = 2
-            local Row = CreateRow("", (CurrentTitle ~= "" and 26 or 18), true, false)
+            local LineThickness = 3
+            local Row = CreateRow("", (CurrentTitle ~= "" and 30 or 20), true, false)
 
             local function CreateDividerLine(props)
                 local line = Create("Frame", props)
@@ -834,8 +834,8 @@ function Library:Window(Options)
                 Size = UDim2.new(1, -(LineInset * 2), 0, LineThickness),
                 Position = UDim2.new(0, LineInset, 0.5, 0),
                 AnchorPoint = Vector2.new(0, 0.5),
-                BackgroundColor3 = Theme.Border,
-                BackgroundTransparency = 0.2,
+                BackgroundColor3 = Theme.TextSecondary,
+                BackgroundTransparency = 0,
                 BorderSizePixel = 0,
                 Parent = Row
             })
@@ -844,8 +844,8 @@ function Library:Window(Options)
                 Size = UDim2.new(0.5, -(LineInset + MidGap), 0, LineThickness),
                 Position = UDim2.new(0, LineInset, 0.5, 0),
                 AnchorPoint = Vector2.new(0, 0.5),
-                BackgroundColor3 = Theme.Border,
-                BackgroundTransparency = 0.2,
+                BackgroundColor3 = Theme.TextSecondary,
+                BackgroundTransparency = 0,
                 BorderSizePixel = 0,
                 Visible = false,
                 Parent = Row
@@ -855,8 +855,8 @@ function Library:Window(Options)
                 Size = UDim2.new(0.5, -(LineInset + MidGap), 0, LineThickness),
                 Position = UDim2.new(1, -LineInset, 0.5, 0),
                 AnchorPoint = Vector2.new(1, 0.5),
-                BackgroundColor3 = Theme.Border,
-                BackgroundTransparency = 0.2,
+                BackgroundColor3 = Theme.TextSecondary,
+                BackgroundTransparency = 0,
                 BorderSizePixel = 0,
                 Visible = false,
                 Parent = Row
@@ -869,9 +869,9 @@ function Library:Window(Options)
                 AnchorPoint = Vector2.new(0.5, 0.5),
                 BackgroundTransparency = 1,
                 Text = CurrentTitle,
-                TextColor3 = Theme.TextSecondary,
+                TextColor3 = Theme.TextPrimary,
                 Font = Theme.Font,
-                TextSize = 11,
+                TextSize = 12,
                 Visible = false,
                 Parent = Row
             })
@@ -886,10 +886,10 @@ function Library:Window(Options)
             end
 
             ThemeUpdate(function()
-                FullLine.BackgroundColor3 = Theme.Border
-                LeftLine.BackgroundColor3 = Theme.Border
-                RightLine.BackgroundColor3 = Theme.Border
-                TitleLabel.TextColor3 = Theme.TextSecondary
+                FullLine.BackgroundColor3 = Theme.TextSecondary
+                LeftLine.BackgroundColor3 = Theme.TextSecondary
+                RightLine.BackgroundColor3 = Theme.TextSecondary
+                TitleLabel.TextColor3 = Theme.TextPrimary
             end)
 
             RefreshDivider()
