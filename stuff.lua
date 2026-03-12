@@ -878,11 +878,19 @@ function Library:Window(Options)
 
             local function RefreshDivider()
                 local hasTitle = CurrentTitle ~= ""
-                TitleLabel.Text = CurrentTitle
-                FullLine.Visible = not hasTitle
-                LeftLine.Visible = hasTitle
-                RightLine.Visible = hasTitle
-                TitleLabel.Visible = hasTitle
+                if hasTitle then
+                    TitleLabel.Text = string.format("BORDER %s ---------------- BORDER", CurrentTitle)
+                    FullLine.Visible = false
+                    LeftLine.Visible = false
+                    RightLine.Visible = false
+                    TitleLabel.Visible = true
+                else
+                    TitleLabel.Text = ""
+                    FullLine.Visible = true
+                    LeftLine.Visible = false
+                    RightLine.Visible = false
+                    TitleLabel.Visible = false
+                end
             end
 
             ThemeUpdate(function()
@@ -944,7 +952,7 @@ function Library:Window(Options)
             local ColorMap = Create("TextButton", {Parent = PickerFrame, Position = UDim2.new(0, 0, 0, 0), Size = UDim2.new(1, 0, 0, 120), BackgroundColor3 = Color3.fromHSV(HSV[1], 1, 1), AutoButtonColor = false, Text = "", ZIndex = 3001})
             local SatOverlay = Create("Frame", {Parent = ColorMap, Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(1, 1, 1), ZIndex = 3002, BorderSizePixel = 0})
             Create("UIGradient", {Parent = SatOverlay, Transparency = NumberSequence.new{NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 1)}})
-            local ValOverlay = Create("Frame", {Parent = ColorMap, Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(0, 0, 0), ZIndex = 3003, BorderSizePixel = 0})
+            local VlOverlay = Create("Frame", {Parent = ColorMap, Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(0, 0, 0), ZIndex = 3003, BorderSizePixel = 0})
             Create("UIGradient", {Parent = ValOverlay, Rotation = 90, Transparency = NumberSequence.new{NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(1, 0)}})
             
             local MapMarker = Create("Frame", {Parent = ColorMap, Size = UDim2.new(0, 12, 0, 12), BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(HSV[2], 0, 1 - HSV[3], 0), ZIndex = 3004})
