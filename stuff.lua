@@ -507,7 +507,7 @@ function Library:Window(Options)
     local ContentArea = Create("Frame", {Size = UDim2.new(1, 0, 1, -64), Position = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1, Parent = MainFrame})
     local TabContainer = Create("Frame", {Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Parent = ContentArea})
     
-    local SearchContent = Create("ScrollingFrame", {Size = UDim2.new(1, -40, 1, -40), Position = UDim2.new(0, 20, 0, 20), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, ScrollBarImageColor3 = Theme.Accent, CanvasSize = UDim2.new(0, 0, 0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y, Visible = false, Parent = TabContainer})
+    local SearchContent = Create("ScrollingFrame", {Size = UDim2.new(1, -30, 1, -40), Position = UDim2.new(0, 20, 0, 20), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, ScrollBarImageColor3 = Theme.Accent, CanvasSize = UDim2.new(0, 0, 0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y, Visible = false, Parent = TabContainer})
     Create("UIListLayout", {SortOrder = Enum.SortOrder.LayoutOrder, Parent = SearchContent})
 
     local NoResultsLabel = Create("TextLabel", {Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Text = "No results found", TextColor3 = Theme.TextSecondary, Font = Theme.Font, TextSize = 16, Visible = false, Parent = TabContainer})
@@ -706,7 +706,7 @@ function Library:Window(Options)
         local TabIconImage = Create("ImageLabel", {Size = UDim2.new(0, 20, 0, 20), Position = UDim2.new(0.5, 0, 0.5, 0), AnchorPoint = Vector2.new(0.5, 0.5), BackgroundTransparency = 1, Image = TabIcon, ImageColor3 = Theme.TextSecondary, Parent = TabBtn})
 
         local TabCanvas = Create("CanvasGroup", {Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, GroupTransparency = 1, Visible = false, Parent = TabContainer})
-        local TabContent = Create("ScrollingFrame", {Size = UDim2.new(1, -40, 1, -40), Position = UDim2.new(0, 20, 0, 20), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, ScrollBarImageColor3 = Theme.Accent, CanvasSize = UDim2.new(0, 0, 0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y, Parent = TabCanvas})
+        local TabContent = Create("ScrollingFrame", {Size = UDim2.new(1, -30, 1, -40), Position = UDim2.new(0, 20, 0, 20), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 4, ScrollBarImageColor3 = Theme.Accent, CanvasSize = UDim2.new(0, 0, 0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y, Parent = TabCanvas})
         Create("UIListLayout", {SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 4), Parent = TabContent})
 
         ThemeUpdate(function()
@@ -770,14 +770,145 @@ function Library:Window(Options)
             if ActiveTabsCount == 1 then ActivateTab() end
         end
 
-        local function CreateRow(ComponentTitle, Height)
+        local function CreateRow(ComponentTitle, Height, NoSeparator, IncludeInSearch)
             TabObj.LayoutOrder = TabObj.LayoutOrder + 1
             local Row = Create("Frame", {Size = UDim2.new(1, 0, 0, Height or 40), BackgroundTransparency = 1, LayoutOrder = TabObj.LayoutOrder, Parent = TabContent})
-            local RowSep = Create("Frame", {Size = UDim2.new(1, -16, 0, 1), Position = UDim2.new(0, 8, 1, -1), BackgroundColor3 = Theme.Border, BackgroundTransparency = 0.5, BorderSizePixel = 0, Parent = Row})
-            
-            ThemeUpdate(function() RowSep.BackgroundColor3 = Theme.Border end)
-            table.insert(WindowObj.AllRows, {Row = Row, OriginalParent = TabContent, Title = ComponentTitle or ""})
+            if not NoSeparator then
+                local RowSep = Create("Frame", {Size = UDim2.new(1, -16, 0, 1), Position = UDim2.new(0, 8, 1, -1), BackgroundColor3 = Theme.Border, BackgroundTransparency = 0.5, BorderSizePixel = 0, Parent = Row})
+                ThemeUpdate(function() RowSep.BackgroundColor3 = Theme.Border end)
+            end
+            if IncludeInSearch ~= false then
+                table.insert(WindowObj.AllRows, {Row = Row, OriginalParent = TabContent, Title = ComponentTitle or ""})
+            end
             return Row
+        end
+
+        function TabObj:Note(NOpts)
+            NOpts = type(NOpts) == "table" and NOpts or {Text = tostring(NOpts or "")}
+            local CurrentText = tostring(NOpts.Text or NOpts.Title or "")
+            local UsePrimary = NOpts.Primary == true
+
+            local Row = CreateRow("", 28, true, false)
+            local NoteLabel = Create("TextLabel", {
+                Size = UDim2.new(1, -16, 1, 0),
+                Position = UDim2.new(0, 8, 0, 0),
+                BackgroundTransparency = 1,
+                Text = CurrentText,
+                TextColor3 = UsePrimary and Theme.TextPrimary or Theme.TextSecondary,
+                Font = Theme.Font,
+                TextSize = 12,
+                TextWrapped = true,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = Row
+            })
+
+            ThemeUpdate(function()
+                NoteLabel.TextColor3 = UsePrimary and Theme.TextPrimary or Theme.TextSecondary
+            end)
+
+            local NoteObj = {Row = Row}
+            function NoteObj:GetComponentType() return "Note" end
+            function NoteObj:GetText() return CurrentText end
+            function NoteObj:SetText(newText)
+                CurrentText = tostring(newText or "")
+                NoteLabel.Text = CurrentText
+            end
+            return NoteObj
+        end
+
+        function TabObj:Divider(DOpts)
+            DOpts = type(DOpts) == "table" and DOpts or {Title = tostring(DOpts or "")}
+            local CurrentTitle = tostring(DOpts.Title or DOpts.Text or "")
+            local LineInset = 14
+            local MidGap = 36
+            local LineThickness = 2
+            local Row = CreateRow("", (CurrentTitle ~= "" and 26 or 18), true, false)
+
+            local function CreateDividerLine(props)
+                local line = Create("Frame", props)
+                Create("UICorner", {CornerRadius = UDim.new(1, 0), Parent = line})
+                return line
+            end
+
+            local FullLine = CreateDividerLine({
+                Size = UDim2.new(1, -(LineInset * 2), 0, LineThickness),
+                Position = UDim2.new(0, LineInset, 0.5, 0),
+                AnchorPoint = Vector2.new(0, 0.5),
+                BackgroundColor3 = Theme.Border,
+                BackgroundTransparency = 0.2,
+                BorderSizePixel = 0,
+                Parent = Row
+            })
+
+            local LeftLine = CreateDividerLine({
+                Size = UDim2.new(0.5, -(LineInset + MidGap), 0, LineThickness),
+                Position = UDim2.new(0, LineInset, 0.5, 0),
+                AnchorPoint = Vector2.new(0, 0.5),
+                BackgroundColor3 = Theme.Border,
+                BackgroundTransparency = 0.2,
+                BorderSizePixel = 0,
+                Visible = false,
+                Parent = Row
+            })
+
+            local RightLine = CreateDividerLine({
+                Size = UDim2.new(0.5, -(LineInset + MidGap), 0, LineThickness),
+                Position = UDim2.new(1, -LineInset, 0.5, 0),
+                AnchorPoint = Vector2.new(1, 0.5),
+                BackgroundColor3 = Theme.Border,
+                BackgroundTransparency = 0.2,
+                BorderSizePixel = 0,
+                Visible = false,
+                Parent = Row
+            })
+
+            local TitleLabel = Create("TextLabel", {
+                Size = UDim2.new(0, 0, 1, 0),
+                AutomaticSize = Enum.AutomaticSize.X,
+                Position = UDim2.new(0.5, 0, 0.5, 0),
+                AnchorPoint = Vector2.new(0.5, 0.5),
+                BackgroundTransparency = 1,
+                Text = CurrentTitle,
+                TextColor3 = Theme.TextSecondary,
+                Font = Theme.Font,
+                TextSize = 11,
+                Visible = false,
+                Parent = Row
+            })
+
+            local function RefreshDivider()
+                local hasTitle = CurrentTitle ~= ""
+                TitleLabel.Text = CurrentTitle
+                FullLine.Visible = not hasTitle
+                LeftLine.Visible = hasTitle
+                RightLine.Visible = hasTitle
+                TitleLabel.Visible = hasTitle
+            end
+
+            ThemeUpdate(function()
+                FullLine.BackgroundColor3 = Theme.Border
+                LeftLine.BackgroundColor3 = Theme.Border
+                RightLine.BackgroundColor3 = Theme.Border
+                TitleLabel.TextColor3 = Theme.TextSecondary
+            end)
+
+            RefreshDivider()
+
+            local DividerObj = {Row = Row}
+            function DividerObj:GetComponentType() return "Divider" end
+            function DividerObj:GetText() return CurrentTitle end
+            function DividerObj:SetText(newText)
+                CurrentTitle = tostring(newText or "")
+                RefreshDivider()
+            end
+            return DividerObj
+        end
+
+        function TabObj:Section(SOpts)
+            if type(SOpts) == "string" then
+                return self:Divider({Title = SOpts})
+            end
+            return self:Divider(SOpts or {})
         end
 
         local function AttachColorPicker(TargetRow, CompTitle, ColorProps, RightOffset)
